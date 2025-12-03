@@ -1,7 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue' // Ajout de 'computed'
 import ImagesLogo from '../assets/images/imagePortal.png'
 import axios from 'axios'
+import { useUserStore } from '@/stores/user'
 
 // ref est une syntaxe qui permet de dynamiser une variable pour l'afficher
 const nbUser = ref([])
@@ -9,8 +10,89 @@ const nbOffer = ref([])
 const nbCompany = ref([])
 const offers = ref([])
 
-// const isAuthenticated = ref(false) // Simuler l'état pour l'exemple
-const isAuthenticated = ref(false)
+// Utilisation du store pour l'authentification
+const userStore = useUserStore()
+
+// NOUVEAU: Stocke les IDs des offres favorites de l'utilisateur connecté
+const favoritesIds = ref(new Set())
+
+// CORRECTION: Définir isCompany en utilisant 'computed'
+const isCompany = computed(() => userStore.user?.role === 'company')
+
+// NOUVEAU: Fonction pour récupérer les IDs des favoris de l'utilisateur
+const fetchFavorites = async () => {
+  // Ne pas charger les favoris si l'utilisateur n'est pas candidat ou n'est pas authentifié
+  if (!userStore.isAuthenticated || isCompany.value) {
+    // Utilisation correcte de .value
+    return
+  }
+
+  const token = localStorage.getItem('auth_token')
+  if (!token) {
+    console.warn("Jeton d'authentification manquant pour charger les favoris.")
+    return
+  }
+
+  try {
+    // CORRECTION 401: Ajout de l'en-tête Authorization directement à la requête
+    const responses = await axios.get('http://127.0.0.1:8000/api/favorites', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    // On mappe pour obtenir uniquement les IDs
+    const ids = responses.data.data.map((offer) => offer.id)
+    // On stocke dans un Set pour une recherche rapide (O(1))
+    favoritesIds.value = new Set(ids)
+  } catch (err) {
+    console.error('Erreur lors de la récupération des favoris:', err)
+    // Laissez l'erreur 401 se produire si le token n'est pas bon, mais la requête est maintenant formatée correctement.
+  }
+}
+
+// NOUVEAU: Propriété calculée pour savoir si une offre est favorite
+const isFavorite = (offerId) => favoritesIds.value.has(offerId)
+
+// NOUVEAU: Fonction pour ajouter/retirer des favoris
+const toggleFavorite = async (offerId) => {
+  // CORRECTION: Utilisation correcte de isCompany.value
+  if (!userStore.isAuthenticated || isCompany.value) {
+    return // Ne rien faire si non authentifié ou si c'est une compagnie
+  }
+
+  const token = localStorage.getItem('auth_token')
+  if (!token) return
+
+  const isCurrentlyFavorite = isFavorite(offerId)
+  // Construit l'URL selon l'action (ajouter/retirer)
+  const action = isCurrentlyFavorite ? 'remove' : 'add'
+  const method = isCurrentlyFavorite ? 'delete' : 'post'
+  const url = `http://127.0.0.1:8000/api/favorites/${action}/${offerId}`
+
+  try {
+    await axios({
+      method: method,
+      url: url,
+      headers: {
+        // Ajout de l'en-tête pour les requêtes POST/DELETE aussi
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    // Mettre à jour l'état local immédiatement
+    if (isCurrentlyFavorite) {
+      favoritesIds.value.delete(offerId)
+    } else {
+      favoritesIds.value.add(offerId)
+    }
+    // Utiliser une nouvelle instance de Set pour que Vue réagisse à la modification
+    favoritesIds.value = new Set(favoritesIds.value)
+  } catch (err) {
+    console.error('Erreur lors de la mise à jour des favoris:', err)
+    alert('Erreur lors de la mise à jour des favoris. Veuillez réessayer.')
+  }
+}
 
 // Logique pour compter (inchangée)
 const count = async () => {
@@ -39,7 +121,9 @@ onMounted(readOffer)
 // Logique d'authentification
 onMounted(() => {
   if (localStorage.getItem('auth_token') !== null) {
-    isAuthenticated.value = true
+    userStore.isAuthenticated = true // Utilisez userStore
+    // NOUVEAU: Charger les favoris après l'authentification
+    fetchFavorites()
   }
 })
 </script>
@@ -161,8 +245,8 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="card-footer" v-if="isAuthenticated">
-          <a href="/Home/apply" class="btn-apply">
+        <div class="card-footer" v-if="userStore.isAuthenticated && !isCompany">
+          <a :href="`/offers/apply/${offer.id}`" class="btn-apply">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
@@ -177,9 +261,22 @@ onMounted(() => {
             Postuler à l'offre
           </a>
 
-          <a href="favoris" class="btn-heart" title="Ajouter aux favoris" style="margin: 2%">
-            <span style="font-size: 35px">♡</span>
-          </a>
+          <button
+            @click="toggleFavorite(offer.id)"
+            class="btn-heart"
+            :class="{ 'is-favorite': isFavorite(offer.id) }"
+            style="margin: 2%"
+            aria-label="Ajouter aux favoris"
+          >
+            <span style="font-size: 35px">
+              {{ isFavorite(offer.id) ? '♥' : '♡' }}
+            </span>
+          </button>
+        </div>
+        <div class="card-footer" v-else-if="isCompany">
+          <span class="btn-apply"
+            >Les entreprises ne peuvent pas postuler ou ajouter aux favoris.</span
+          >
         </div>
         <div class="card-footer" v-else>
           <a href="/SignIn" class="btn-apply">Connectez-vous pour postuler</a>
@@ -197,7 +294,7 @@ onMounted(() => {
   position: absolute;
   top: 0;
   width: 98.9vw;
-  height: 120vh;
+  height: 100vh;
   object-fit: cover;
   opacity: 0.1;
   z-index: 1;
@@ -680,6 +777,7 @@ onMounted(() => {
   border: 2px solid #e2e8f0;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .btn-heart::before {
@@ -704,6 +802,18 @@ onMounted(() => {
 
 .btn-heart:active {
   transform: scale(0.95);
+}
+
+/* NOUVEAU: Style pour le cœur rempli (favori) */
+.btn-heart.is-favorite {
+  color: #ef4444; /* Rouge pour le cœur rempli */
+  border-color: #ef4444;
+  background-color: #fee2e2; /* Un fond léger pour le cœur rempli */
+}
+
+.btn-heart.is-favorite span {
+  color: #ef4444;
+  line-height: 1;
 }
 
 /* Responsive */

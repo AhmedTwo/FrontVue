@@ -56,6 +56,7 @@ onMounted(readCompany)
     <div class="profil-container">
       <div class="profil-info">
         <hr class="separator" />
+        <p class="user-qualification">{{ user.nom }} {{ user.prenom }}</p>
 
         <div class="info-group">
           <p class="info-item">
@@ -148,29 +149,8 @@ onMounted(readCompany)
 </template>
 
 <style scoped>
-/* 🎨 PALETTE MODERNE */
-:root {
-  --primary: #4f46e5;
-  --primary-light: #818cf8;
-  --primary-dark: #3730a3;
-  --secondary: #06b6d4;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --bg-gradient-start: #f0f9ff;
-  --bg-gradient-end: #e0e7ff;
-  --card-bg: #ffffff;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 15px rgba(79, 70, 229, 0.1);
-  --shadow-lg: 0 20px 50px rgba(79, 70, 229, 0.15);
-  --shadow-glow: 0 0 30px rgba(79, 70, 229, 0.3);
-}
-
 /* 🌐 CONTENEUR GLOBAL AVEC GRADIENT ANIMÉ */
 .page-background-profil {
-  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -179,38 +159,14 @@ onMounted(readCompany)
   overflow: hidden;
 }
 
-.page-background-profil::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgb(100, 167, 255) 30%, transparent 70%);
-  animation: float 20s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  33% {
-    transform: translate(30px, -30px) rotate(120deg);
-  }
-  66% {
-    transform: translate(-20px, 20px) rotate(240deg);
-  }
-}
-
 /* 📦 CARTE PROFIL MODERNE */
 .profil-container {
   background: rgba(128, 128, 128, 0.103);
   border-radius: 24px;
   padding: 5px 20px;
-  width: 100%;
+  width: 25%;
   max-width: 650px;
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(10px);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 20px 50px rgba(2, 1, 17, 0.849);
   position: relative;
 }
 
@@ -220,55 +176,16 @@ onMounted(readCompany)
   top: 0;
   left: 0;
   right: 0;
-  height: 5px;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--primary) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 3s linear infinite;
+  height: 15px;
+  background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 50%, #4f46e5 100%);
   border-radius: 24px 24px 0 0;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.profil-container:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: var(--shadow-glow);
-}
-
-/* 👤 PHOTO DE PROFIL AVEC EFFET GLASSMORPHISM */
+/* 👤 PHOTO DE PROFIL */
 .photo-edit-zone {
   position: relative;
   display: inline-block;
   margin-bottom: 30px;
-}
-
-.photo-edit-zone::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, var(--primary), var(--secondary), var(--primary));
-  background-size: 200% 200%;
-  animation: rotate-gradient 4s linear infinite;
-  z-index: -1;
-}
-
-@keyframes rotate-gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
 }
 
 .profil-photo {
@@ -276,15 +193,13 @@ onMounted(readCompany)
   height: 140px;
   border-radius: 50%;
   object-fit: cover;
-  border: 6px solid var(--card-bg);
-  box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: brightness(1.05) contrast(1.1);
+  border: 6px solid;
+  border-color: #4f46e5;
+  box-shadow: 0 20px 50px rgba(2, 1, 17, 0.226);
 }
 
 .profil-photo:hover {
-  transform: scale(1.15) rotate(5deg);
-  box-shadow: 0 12px 48px rgba(79, 70, 229, 0.5);
+  box-shadow: 0 20px 50px rgba(2, 1, 17, 0.226);
 }
 
 /* ✏️ BOUTON ÉDITION MODERNISÉ */
@@ -292,34 +207,24 @@ onMounted(readCompany)
   position: absolute;
   bottom: 5px;
   right: 5px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  width: 44px;
-  height: 44px;
+  background: #4f46e5;
+  width: 25%;
+  height: 15%;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  z-index: 10;
 }
 
 .btn-edit-float:hover {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-  transform: scale(1.2) rotate(15deg);
-  box-shadow: 0 6px 25px rgba(79, 70, 229, 0.6);
+  transform: scale(1.3) rotate(5deg);
 }
 
 .btn-edit-float svg {
   width: 20px;
   height: 20px;
-  transition: transform 0.3s ease;
-}
-
-.btn-edit-float:hover svg {
-  transform: rotate(-15deg);
 }
 
 /* 📋 INFORMATIONS UTILISATEUR */
@@ -328,7 +233,7 @@ onMounted(readCompany)
 }
 
 .user-qualification {
-  color: var(--text-secondary);
+  color: black;
   font-size: 1.1rem;
   font-weight: 500;
   margin-bottom: 30px;
@@ -343,39 +248,28 @@ onMounted(readCompany)
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 60px;
+  width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  background: linear-gradient(90deg, transparent, #4f46e5, transparent);
   border-radius: 2px;
 }
 
 .separator {
   border: none;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--primary-light), transparent);
+  height: 3px;
   margin: 30px 0;
   opacity: 0.3;
 }
 
 /* 📱 GROUPES D'INFORMATIONS */
-.info-group,
-.status-group {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
 .info-item {
   font-size: 1rem;
-  color: var(--text-primary);
+  color: black;
   display: flex;
   align-items: center;
   padding: 12px 16px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  background: white;
 }
 
 .info-item::before {
@@ -384,16 +278,10 @@ onMounted(readCompany)
   left: 0;
   top: 0;
   bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--primary), var(--secondary));
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
 }
 
 .info-item:hover {
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-  transform: translateX(5px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1);
 }
 
 .info-item:hover::before {
@@ -402,7 +290,7 @@ onMounted(readCompany)
 
 .info-item span:first-of-type {
   font-weight: 700;
-  color: var(--text-secondary);
+  color: black;
   min-width: 110px;
   margin-right: 12px;
   font-size: 0.9rem;
@@ -412,13 +300,13 @@ onMounted(readCompany)
 
 .info-value {
   font-weight: 600;
-  color: var(--text-primary);
+  color: black;
   flex: 1;
 }
 
 /* 🔗 LIEN EMAIL */
 .email-link {
-  color: var(--primary);
+  color: #4f46e5;
   text-decoration: none;
   position: relative;
   transition: all 0.3s ease;
@@ -431,12 +319,12 @@ onMounted(readCompany)
   left: 0;
   width: 0;
   height: 2px;
-  background: var(--primary);
+  background: #4f46e5;
   transition: width 0.3s ease;
 }
 
 .email-link:hover {
-  color: var(--primary-dark);
+  color: #3730a3;
 }
 
 .email-link:hover::after {
@@ -448,30 +336,28 @@ onMounted(readCompany)
   width: 22px;
   height: 22px;
   margin-right: 12px;
-  color: var(--primary);
+  color: #4f46e5;
   flex-shrink: 0;
   transition: all 0.3s ease;
 }
 
 .info-item:hover .info-icon {
   transform: scale(1.2) rotate(5deg);
-  color: var(--secondary);
+  color: #06b6d4;
 }
 
 /* 🔗 LIEN CV AVEC EFFET */
 .cv-link {
-  color: var(--success);
+  color: black;
   font-weight: 700;
   text-decoration: none;
   padding: 6px 16px;
   border-radius: 8px;
   background: rgba(16, 185, 129, 0.596);
-  transition: all 0.3s ease;
-  display: inline-block;
 }
 
 .cv-link:hover {
-  background: var(--success);
+  background: #10b981;
   color: black;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.959);
@@ -495,10 +381,6 @@ onMounted(readCompany)
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
 }
 
 .status-badge::before {
@@ -509,11 +391,6 @@ onMounted(readCompany)
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition:
-    width 0.4s ease,
-    height 0.4s ease;
 }
 
 .status-badge:hover::before {
@@ -522,34 +399,23 @@ onMounted(readCompany)
 }
 
 .badge-admin {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
   color: white;
 }
 
 .badge-unavailable {
-  background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
-  color: black;
+  background: linear-gradient(135deg, #482bec 0%, #fd6060 100%);
+  color: white;
 }
 
 .badge-available {
-  background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: black;
 }
 
 .status-badge:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* ✨ ANIMATIONS SUPPLÉMENTAIRES */
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
 }
 
 .info-item {
@@ -581,8 +447,8 @@ onMounted(readCompany)
 }
 
 /* ========================================
-   📱 RESPONSIVE DESIGN COMPLET
-   ======================================== */
+    📱 RESPONSIVE DESIGN COMPLET
+    ======================================== */
 
 /* Tablettes et écrans moyens (max 1024px) */
 @media (max-width: 1024px) {
@@ -639,7 +505,8 @@ onMounted(readCompany)
   .profil-photo {
     width: 120px;
     height: 120px;
-    border: 5px solid var(--card-bg);
+    /* Ancienne variable remplacée : --card-bg */
+    border: 5px solid #ffffff;
   }
 
   .photo-edit-zone::before {
@@ -741,7 +608,8 @@ onMounted(readCompany)
   .profil-photo {
     width: 100px;
     height: 100px;
-    border: 4px solid var(--card-bg);
+    /* Ancienne variable remplacée : --card-bg */
+    border: 4px solid #ffffff;
   }
 
   .photo-edit-zone {
@@ -853,7 +721,8 @@ onMounted(readCompany)
   .profil-photo {
     width: 90px;
     height: 90px;
-    border: 3px solid var(--card-bg);
+    /* Ancienne variable remplacée : --card-bg */
+    border: 3px solid #ffffff;
   }
 
   .photo-edit-zone {
@@ -947,7 +816,8 @@ onMounted(readCompany)
 @media (hover: none) and (pointer: coarse) {
   .profil-container:hover {
     transform: none;
-    box-shadow: var(--shadow-lg);
+    /* Ancienne variable remplacée : --shadow-lg */
+    box-shadow: 0 20px 50px rgba(79, 70, 229, 0.15);
   }
 
   .profil-photo:hover {

@@ -174,7 +174,10 @@ const submitForm = async () => {
    ------------------- */
 
 .page-container {
-  padding: 70px 0; /* Réduction du padding général */
+  font-family:
+    'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana,
+    sans-serif;
+  padding: 70px 0;
   background-color: #f8f9fa;
   display: flex;
   justify-content: center;
@@ -182,8 +185,8 @@ const submitForm = async () => {
 
 .content-wrapper {
   width: 100%;
-  max-width: 1000px; /* Légère réduction de la largeur max */
-  padding: 0 10px; /* Réduction du padding latéral */
+  max-width: 1000px;
+  padding: 0 10px;
 }
 
 /* -------------------
@@ -192,24 +195,24 @@ const submitForm = async () => {
 
 .contact-card-pure {
   background-color: white;
-  padding: 30px; /* Réduction du padding de la carte */
-  border-radius: 12px; /* Léger ajustement du radius */
+  padding: 30px;
+  border-radius: 12px;
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease-in-out;
 }
 
 .main-title {
   text-align: center;
-  font-size: 2.2rem; /* Réduction de la taille du titre principal */
+  font-size: 2.2rem;
   color: #0d6efd;
   font-weight: bold;
-  margin-bottom: 30px; /* Réduction de la marge */
+  margin-bottom: 30px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #0d6efd; /* Bordure plus fine */
+  border-bottom: 2px solid #0d6efd;
 }
 
 .section-title {
-  font-size: 1.5rem; /* Réduction de la taille des sous-titres */
+  font-size: 1.5rem;
   color: #343a40;
   margin-bottom: 20px;
   font-weight: 600;
@@ -223,7 +226,7 @@ const submitForm = async () => {
 
 .contact-content-flex {
   display: flex;
-  gap: 30px; /* Réduction de l'espace entre les colonnes */
+  gap: 30px;
 }
 
 .contact-info-panel {
@@ -242,20 +245,20 @@ const submitForm = async () => {
 .contact-grid {
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Réduction de l'espace entre les éléments d'info */
+  gap: 15px;
 }
 
 .info-item-pure {
   display: flex;
   align-items: center;
   background-color: #e9ecef;
-  padding: 15px; /* Réduction du padding de l'info item */
+  padding: 15px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .icon {
-  font-size: 2rem; /* Réduction de la taille de l'icône */
+  font-size: 2rem;
   margin-right: 15px;
   min-width: 40px;
 }
@@ -379,7 +382,6 @@ textarea:focus {
    ------------------- */
 
 @media (max-width: 992px) {
-  /* Le mode colonne est conservé pour les écrans de taille moyenne */
   .contact-content-flex {
     flex-direction: column;
     gap: 20px;
@@ -392,7 +394,6 @@ textarea:focus {
   }
 }
 
-/* Le responsive pour les icônes en mode colonne sur très petit écran est conservé */
 @media (max-width: 480px) {
   .info-item-pure {
     flex-direction: column;

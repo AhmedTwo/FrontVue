@@ -4,7 +4,6 @@ import Connexion from '../views/SignIn.vue'
 import Inscription from '../views/SignUp.vue'
 import Password from '../views/PasswordForget.vue'
 import ApplyCompany from '../views/AddCompany.vue'
-import Accueil from '../views/Home.vue'
 import Apply from '../views/ApplyOffer.vue'
 import Offers from '../views/Offers.vue'
 import Companys from '../views/Companys.vue'
@@ -50,11 +49,6 @@ const router = createRouter({
       path: '/SignIn/AddCompany',
       name: 'ajoutSociete',
       component: ApplyCompany,
-    },
-    {
-      path: '/Home',
-      name: 'Accueil',
-      component: Accueil,
     },
     {
       path: '/offers/apply/:id',
