@@ -9,7 +9,7 @@ const token = localStorage.getItem('auth_token')
 // on change le nom de la variable pour stocker un seul objet
 const user = ref(null)
 
-const readCompany = async () => {
+const readProfil = async () => {
   const userId = userStore.user.id
 
   if (!userId) {
@@ -33,7 +33,7 @@ const readCompany = async () => {
   }
 }
 
-onMounted(readCompany)
+onMounted(readProfil)
 </script>
 
 <template>
@@ -120,7 +120,12 @@ onMounted(readCompany)
               />
             </svg>
             <span>CV :</span>
-            <a href="#" target="_blank" class="cv-link">Télécharger</a>
+            <a
+              :href="'http://127.0.0.1:8000/storage/' + user.cv_pdf"
+              target="_blank"
+              class="cv-link"
+              >Télécharger</a
+            >
           </p>
           <p class="info-item status-display">
             <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

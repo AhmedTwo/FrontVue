@@ -65,7 +65,7 @@ const updateRequest = async () => {
     )
 
     alert('✅ Demande mise à jour avec succès')
-    router.push('/MyRequest')
+    router.back()
   } catch (error) {
     console.error('Erreur lors de la mise à jour :', error)
     alert('❌ Erreur lors de la mise à jour de la demande.')

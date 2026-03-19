@@ -1,60 +1,82 @@
 <script setup>
+// Importe les fonctions réactives 'onMounted' (pour les actions au chargement) et 'ref' (pour les variables dynamiques) de Vue.js.
 import { onMounted, ref } from 'vue'
+// Importe le store Pinia (gestionnaire d'état) qui contient l'état de l'utilisateur (authentification, rôle).
 import { useUserStore } from '@/stores/user'
+// Importe la bibliothèque Axios, utilisée pour effectuer les requêtes HTTP (GET, DELETE, etc.) vers l'API Backend.
 import axios from 'axios'
 
-// ref pour stocker uniquement les offres favorites
-const favoriteOffers = ref([])
-
+// Initialise et utilise le store utilisateur pour accéder à ses données et à son état.
 const userStore = useUserStore()
 
 // Vérifier si l'utilisateur est une company (nécessaire pour la vérification)
+// Vérifie le rôle de l'utilisateur stocké dans le store. Si le rôle est 'company',
+// il n'a pas accès aux favoris (seuls les candidats en ont).
 const isCompany = userStore.user?.role === 'company'
+
+// ref pour stocker uniquement les offres favorites
+// Déclare une variable réactive 'favoriteOffers', Vue.js surveillera cette variable
+// pour mettre à jour l'interface utilisateur dès qu'elle changera. Elle est initialisée comme un tableau vide
+const favoriteOffers = ref([])
 
 // Fonction pour récupérer les offres favorites
 const fetchFavoriteOffers = async () => {
-  // Ne pas charger si l'utilisateur n'est pas candidat ou n'est pas authentifié
+  // on charge pas si l'utilisateur n'est pas candidat/admin ou n'est pas authentifié
+  // Si l'utilisateur n'est pas connecté OU si son rôle est 'company', la fonction s'arrête immédiatement avec le return.
   if (!userStore.isAuthenticated || isCompany) {
     return
   }
 
+  // on recup le jeton d'authentification (token) stocké localement, nécessaire pour prouver l'identité à l'API.
   const token = localStorage.getItem('auth_token')
+
   if (!token) {
+    // Affiche un avertissement si le token est manquant et arrête l'exécution
     console.warn("Jeton d'authentification manquant pour charger les favoris.")
     return
   }
 
   try {
-    // Requête pour récupérer les favoris de l'utilisateur
+    // la rqt pour récupérer les favoris de l'utilisateur
+    // on envoie une requête GET à l'API pour obtenir la liste des favoris
     const responses = await axios.get('http://127.0.0.1:8000/api/favorites', {
       headers: {
+        // Ajoute le token dans l'en-tête 'Authorization' au format Bearer pour l'authentification
+        // sinon sa bloquera selon le middleware dans api.php
         Authorization: `Bearer ${token}`,
       },
     })
-    // Les données sont les offres elles-mêmes grâce au contrôleur Laravel
+    // on met à jour la variable 'favoriteOffers' avec les données reçues de l'API
+    // ca met à jour l'affichage automatiquement
     favoriteOffers.value = responses.data.data
   } catch (err) {
+    // le cle recupere et affiche toute erreur survenue pendant la requête
     console.error('Erreur lors de la récupération des offres favorites:', err)
   }
 }
 
 // Fonction pour retirer une offre des favoris (utilisée uniquement sur cette page)
+// Prend l'ID de l'offre à retirer en argument.
 const removeFavorite = async (offerId) => {
+  // Vérification de l'authentification et du rôle avant toute action.
   if (!userStore.isAuthenticated || isCompany) return
 
   const token = localStorage.getItem('auth_token')
-  if (!token) return
+  if (!token) return // Construit l'URL complète pour la requête de suppression, incluant l'ID de l'offre.
 
   const url = `http://127.0.0.1:8000/api/favorites/remove/${offerId}`
   try {
+    // Envoie une requête HTTP DELETE à l'API pour retirer l'offre.
     await axios.delete(url, {
       headers: {
+        // Inclut à nouveau le token pour l'autorisation.
         Authorization: `Bearer ${token}`,
       },
     })
-    console.log(`Offre ${offerId} retirée des favoris.`)
+    console.log(`Offre ${offerId} retirée des favoris.`) // Retirer l'offre de la liste locale pour mettre à jour l'affichage immédiatement
+    // Filtre le tableau 'favoriteOffers' pour enlever l'offre dont l'ID correspond à 'offerId'.
+    // C'est une mise à jour optimiste du Frontend.
 
-    // Retirer l'offre de la liste locale pour mettre à jour l'affichage immédiatement
     favoriteOffers.value = favoriteOffers.value.filter((offer) => offer.id !== offerId)
   } catch (err) {
     console.error('Erreur lors de la suppression du favori:', err)
@@ -62,13 +84,17 @@ const removeFavorite = async (offerId) => {
   }
 }
 
+// 'onMounted' est un hook de cycle de vie de Vue.js qui s'exécute une fois
+// que le composant a été monté (inséré dans le DOM).
 onMounted(() => {
   // S'assurer que l'état d'authentification est correct au chargement
+  // Vérifie si un token est présent dans le stockage local pour déterminer si l'utilisateur est potentiellement connecté.
   if (localStorage.getItem('auth_token') !== null) {
+    // Met à jour l'état du store si un token est trouvé.
     userStore.isAuthenticated = true
-  }
+  } // Charger les favoris si l'utilisateur est un candidat
+  // Appelle la fonction de chargement des favoris uniquement si l'utilisateur est authentifié et n'est pas une entreprise.
 
-  // Charger les favoris si l'utilisateur est un candidat
   if (userStore.isAuthenticated && !isCompany) {
     fetchFavoriteOffers()
   }
@@ -84,8 +110,8 @@ onMounted(() => {
   <div class="offers-grid">
     <div v-if="favoriteOffers.length === 0" class="no-results-message">
       <p>
-        **Vous n'avez pas encore d'offres favorites.** Cliquez sur la page "Nos Offres" pour en
-        ajouter !
+        **Vous n'avez pas encore d'offres favorites.** Cliquez sur la page
+        <a href="/offers" style="text-decoration: none">"Nos Offres" </a> pour en ajouter !
       </p>
     </div>
 

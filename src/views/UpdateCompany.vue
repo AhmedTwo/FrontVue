@@ -109,7 +109,7 @@ const updateCompany = async () => {
     message.value.type = 'success'
 
     setTimeout(() => {
-      router.push('/Dashboard_Company')
+      router.back()
     }, 1500)
   } catch (error) {
     console.error('Erreur lors de la mise à jour :', error)
@@ -270,6 +270,7 @@ onMounted(loadCompany)
 
       <div class="form-actions">
         <button type="submit" class="btn-update" :disabled="isLoading">Mettre à jour</button>
+        <button type="button" @click.prevent="router.back()" class="btn-cancel">Annuler</button>
       </div>
     </form>
   </main>
@@ -387,6 +388,25 @@ onMounted(loadCompany)
 .btn-update:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.btn-cancel {
+  background-color: #6c757d; /* Gris pour l'annulation */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-cancel:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Messages d'état */

@@ -61,11 +61,7 @@ const isAdmin = computed(() => userStore.user?.role === 'admin')
         </li>
 
         <li class="dropdown" v-if="isAdmin">
-          <a href="#">Administration ▾</a>
-          <ul class="dropdown-content">
             <li><a href="/Dashboard_Admin" class="">Dashboard</a></li>
-            <li><a href="/Request" class="">Les demandes</a></li>
-          </ul>
         </li>
       </ul>
 
@@ -100,10 +96,17 @@ const isAdmin = computed(() => userStore.user?.role === 'admin')
 
   <footer>
     <p>&copy; 2025 - Tous droits réservés</p>
+    <a class="mention" href="https://entreprendre.service-public.gouv.fr/vosdroits/F31228#:~
+    text=Les%20mentions%20l%C3%A9gales%20sont%20les,ou%20dans%20une%20page%20d%C3%A9di%C3%A9e." target="blank">Mentions légales</a>
   </footer>
 </template>
 
 <style scoped>
+.mention {
+  color: white;
+  text-decoration: none;
+}
+
 .sign_in,
 .sign_up {
   padding: 0.6rem 1.4rem;

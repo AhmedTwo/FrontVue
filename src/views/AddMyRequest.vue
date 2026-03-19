@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
@@ -41,11 +41,7 @@ const addRequest = async () => {
 
     success.value = true
     console.log('Demande ajoutée:', response.data)
-
-    // redirection après succès
-    setTimeout(() => {
-      router.push('/MyRequest/')
-    }, 1000)
+    router.back()
   } catch (err) {
     console.error("Erreur lors de l'ajout de la demande :", err.response?.data || err)
     //  erreur retournée par le serveur si elle existe

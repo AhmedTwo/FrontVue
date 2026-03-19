@@ -142,8 +142,8 @@ onMounted(loadRequestData)
             :class="[
               'badge',
               {
-                'badge-pending': request.status === 'En_attente',
-                'badge-active': request.status === 'Approuvée', // Ajoutez d'autres classes au besoin
+                'badge-pending': request.status === 'En Attente',
+                'badge-active': request.status === 'Validée',
               },
             ]"
           >
@@ -368,13 +368,13 @@ h1 {
 }
 
 .badge-pending {
-  background: #fff3cd;
-  color: #856404;
+  background: #fcd75d;
+  color: black;
 }
 
 .badge-active {
-  background: #d4edda;
-  color: #155724;
+  background: #a7f7b9;
+  color: green;
 }
 
 /* Pied de carte */

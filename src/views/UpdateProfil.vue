@@ -20,10 +20,14 @@ const profil = ref({
   qualification: '',
   disponibilite: '',
   photo: '',
+  cv_pdf: '',
 })
 
 const newPhoto = ref(null)
 const photoPreview = ref(null)
+
+const newCV = ref(null)
+const CvPreview = ref(null)
 
 const currentPassword = ref('')
 const newPassword = ref('')
@@ -53,11 +57,16 @@ const loadProfil = async () => {
       qualification: data.qualification,
       disponibilite: !!data.disponibilite,
       photo: data.photo,
+      cv_pdf: data.cv_pdf,
     }
 
     // si une photo existe, on prépare l'aperçu
     if (data.photo) {
       photoPreview.value = `http://127.0.0.1:8000/storage/${data.photo}`
+    }
+    // si un cv existe, on prépare l'aperçu
+    if (data.cv_pdf) {
+      CvPreview.value = `http://127.0.0.1:8000/storage/${data.cv_pdf}`
     }
   } catch (error) {
     console.error('Erreur lors du chargement du Profil :', error)
@@ -72,6 +81,14 @@ const handlePhotoChange = (event) => {
   if (file) {
     newPhoto.value = file
     photoPreview.value = URL.createObjectURL(file)
+  }
+}
+
+const handleCvChange = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    newCV.value = file
+    CvPreview.value = URL.createObjectURL(file)
   }
 }
 
@@ -104,6 +121,11 @@ const updateProfil = async () => {
     formData.append('photo', newPhoto.value)
   }
 
+  // si une nouveau cv a été sélectionné
+  if (newCV.value) {
+    formData.append('cv_pdf', newCV.value)
+  }
+
   try {
     await axios.post(`http://127.0.0.1:8000/api/userUpdate/${profilId}`, formData, {
       headers: {
@@ -113,7 +135,7 @@ const updateProfil = async () => {
     })
 
     alert('✅ Profil mis à jour avec succès')
-    router.push('/Profil')
+    router.back() // retourne vers la page precedente
   } catch (error) {
     console.error('Erreur lors de la mise à jour :', error)
     alert('❌ Erreur lors de la mise à jour du Profil.')
@@ -203,6 +225,20 @@ onMounted(loadProfil)
             <label for="qualification">Qualification / Poste</label>
             <input id="qualification" type="text" v-model="profil.qualification" />
           </div>
+        </div>
+
+        <hr class="separator" />
+
+        <div class="photo-upload-section">
+          <div v-if="CvPreview">
+            <a :href="CvPreview" target="_blank">👉 Clique ici pour voir ton fichier (CV) 👈 </a>
+          </div>
+          <div v-else class="no-photo">Aucun CV</div>
+          <br />
+          <label class="btn-change-photo">
+            Changer le CV
+            <input type="file" accept=".pdf" @change="handleCvChange" hidden />
+          </label>
         </div>
 
         <div class="form-group checkbox-group">

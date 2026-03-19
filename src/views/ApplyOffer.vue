@@ -1,6 +1,9 @@
 <script setup>
 import { ref, defineProps } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // --- Récupération de l'ID passé dans l'URL via Vue Router ---
 // Exemple : /Home/apply/12  => offerId = 12
@@ -39,7 +42,8 @@ const applyToOffer = async () => {
     // Succès
     message.value = '✅ ' + response.data.message
     isApplied.value = true
-    motivation.value = '' // reset champ
+    motivation.value = '' // reset du champ motivation
+    router.back() // retourne vers la page precedente
   } catch (error) {
     // Erreurs backend
     isApplied.value = false
@@ -70,6 +74,10 @@ const applyToOffer = async () => {
     <form @submit.prevent="applyToOffer" class="apply-form">
       <div class="motivation-field">
         <label for="inputMotivation" class="field-label">MOTIVATION :</label>
+        <p style="font-size: 12px; font-family: inherit; color: green">
+          (Votre CV et vos informations personnelles sont <br />
+          déjà importé depuis votre profil !)
+        </p>
 
         <textarea
           v-model="motivation"
@@ -129,10 +137,10 @@ const applyToOffer = async () => {
 
 /* Labels */
 .field-label {
-  font-weight: 600;
-  color: #555;
+  font-weight: 700;
+  color: black;
   margin-bottom: 10px;
-  font-size: 1rem;
+  font-size: 1.2rem;
   text-transform: uppercase;
   letter-spacing: 1px;
 }

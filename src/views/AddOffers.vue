@@ -77,10 +77,7 @@ const addOffer = async () => {
 
     success.value = true
     console.log('Offre ajoutée:', response.data) // redirection après succès
-
-    setTimeout(() => {
-      router.push('/Dashboard_Company')
-    }, 1000)
+    router.back()
   } catch (err) {
     console.error("Erreur lors de l'ajout de l'offre:", err.response?.data || err) // Gestion détaillée des erreurs de validation de Laravel
     if (err.response?.status === 422 && err.response?.data?.errors) {

@@ -1,140 +1,58 @@
 <script setup>
+// Importe les fonctions de Vue nécessaires pour les propriétés calculées, le cycle de vie, et l'état réactif.
 import { computed, onMounted, ref } from 'vue'
+// Importe le store Pinia pour accéder aux informations de l'utilisateur (authentification, rôle).
 import { useUserStore } from '@/stores/user'
+// Importe la librairie HTTP pour effectuer des requêtes API.
 import axios from 'axios'
 
-// ref est une syntaxe qui permet de dynamiser une variable pour l'afficher dans le html
+// --- 1. Variables Réactives d'État ---
+// on crée une référence réactive pour stocker la liste de toutes les offres d'emploi récupérées avec l'API.
 const offers = ref([])
 
-// NOUVEAU: Stocke les IDs des offres favorites de l'utilisateur connecté
+// on crée une référence réactive pour stocker les IDs des offres que l'utilisateur a mises en favoris.
+// on utilise un Set ce qui est optimal pour vérifier rapidement si un élément est inclus (O(1)).
 const favoritesIds = ref(new Set())
 
-// NOUVEAU: Variables pour la recherche
-const searchCity = ref('') // Recherche par Ville (location)
-const searchContract = ref('') // Recherche par Contrat (employment_type.name)
-const searchName = ref('') // Recherche par Nom/Titre (title)
-const searchDomain = ref('') // Recherche par Domaine (category)
-// FIN NOUVEAU
+// Variables réactives pour stocker les valeurs des champs de recherche/filtres.
+const searchCity = ref('')
+const searchContract = ref('')
+const searchName = ref('')
+const searchDomain = ref('')
 
-const readOffer = async () => {
-  // temps de chargement front plus rapide, avec la donnée qui arrive
-  try {
-    const responses = await axios.get('http://127.0.0.1:8000/api/allOffer')
-    offers.value = responses.data.data // console.log(offers.value)
-  } catch (err) {
-    console.log(err)
-  }
-}
-
+// on crée une instance du store utilisateur pour accéder aux données et à l'état d'authentification.
 const userStore = useUserStore()
 
-// Vérifier si l'utilisateur est une company
+// --- 2. Propriétés Calculées ---
+// Propriété calculée pour vérifier rapidement si l'utilisateur est une 'company'.
+// Ceci évite de charger les favoris ou d'afficher le bouton Favoris pour ce rôle.
 const isCompany = computed(() => userStore.user?.role === 'company')
 
-// NOUVEAU: Fonction pour récupérer les IDs des favoris de l'utilisateur
-const fetchFavorites = async () => {
-  // Ne pas charger les favoris si l'utilisateur n'est pas candidat ou n'est pas authentifié
-  if (!userStore.isAuthenticated || isCompany.value) {
-    return
-  }
-
-  const token = localStorage.getItem('auth_token')
-  if (!token) {
-    console.warn("Jeton d'authentification manquant pour charger les favoris.")
-    return
-  }
-
-  try {
-    // CORRECTION 401: Ajout de l'en-tête Authorization directement à la requête
-    const responses = await axios.get('http://127.0.0.1:8000/api/favorites', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-
-    // On mappe pour obtenir uniquement les IDs
-    const ids = responses.data.data.map((offer) => offer.id)
-    // On stocke dans un Set pour une recherche rapide (O(1))
-    favoritesIds.value = new Set(ids)
-  } catch (err) {
-    console.error('Erreur lors de la récupération des favoris:', err)
-    // Laissez l'erreur 401 se produire si le token n'est pas bon, mais la requête est maintenant formatée correctement.
-  }
-}
-
-// NOUVEAU: Propriété calculée pour savoir si une offre est favorite
-const isFavorite = (offerId) => favoritesIds.value.has(offerId)
-
-// NOUVEAU: Fonction pour ajouter/retirer des favoris
-const toggleFavorite = async (offerId) => {
-  if (!userStore.isAuthenticated || isCompany.value) {
-    return // Ne rien faire si non authentifié ou si c'est une compagnie
-  }
-
-  const token = localStorage.getItem('auth_token')
-  if (!token) return
-
-  const isCurrentlyFavorite = isFavorite(offerId)
-  // Construit l'URL selon l'action (ajouter/retirer)
-  const action = isCurrentlyFavorite ? 'remove' : 'add'
-  const method = isCurrentlyFavorite ? 'delete' : 'post'
-  const url = `http://127.0.0.1:8000/api/favorites/${action}/${offerId}`
-
-  try {
-    await axios({
-      method: method,
-      url: url,
-      headers: {
-        // Ajout de l'en-tête pour les requêtes POST/DELETE aussi
-        Authorization: `Bearer ${token}`,
-      },
-    })
-
-    // Mettre à jour l'état local immédiatement
-    if (isCurrentlyFavorite) {
-      favoritesIds.value.delete(offerId)
-    } else {
-      favoritesIds.value.add(offerId)
-    }
-    // Utiliser une nouvelle instance de Set pour que Vue réagisse à la modification
-    favoritesIds.value = new Set(favoritesIds.value)
-  } catch (err) {
-    console.error('Erreur lors de la mise à jour des favoris:', err)
-    alert('Erreur lors de la mise à jour des favoris. Veuillez réessayer.')
-  }
-}
-
-onMounted(readOffer)
-
-onMounted(() => {
-  if (localStorage.getItem('auth_token') !== null) {
-    userStore.isAuthenticated = true
-    // NOUVEAU: Charger les favoris après l'authentification
-    fetchFavorites()
-  }
-})
-
-// Vérifier si l'utilisateur est une company (déjà défini plus haut)
-// NOUVEAU: Propriété calculée pour filtrer les offres
+// Propriété calculée pour filtrer la liste des offres basées sur les entrées de recherche.
+// Elle se recalcule automatiquement dès que 'offers.value' ou une variable 'search...' change.
 const filteredOffers = computed(() => {
-  // Convertir les termes de recherche en minuscules et supprimer les espaces pour une recherche insensible à la casse
+  // Rend les filtres plus faciles à utiliser : en minuscule, sans espaces et sans accent (si on ajoute une librairie).
   const cityFilter = searchCity.value.toLowerCase().trim()
   const contractFilter = searchContract.value.toLowerCase().trim()
   const nameFilter = searchName.value.toLowerCase().trim()
   const domainFilter = searchDomain.value.toLowerCase().trim()
 
-  // Si aucun filtre n'est appliqué (toutes les chaînes sont vides), retourner toutes les offres
+  // Optimisation : Si aucun filtre n'est saisi, retourne l'intégralité des offres sans itérer.
   if (!cityFilter && !contractFilter && !nameFilter && !domainFilter) {
     return offers.value
   }
 
+  // on filtre les offres en appliquant toutes les conditions de recherche.
   return offers.value.filter((offer) => {
+    // La fonction de vérification de filtre retourne 'true' si le filtre n'est pas appliqué (chaîne vide)
+    // OU si la valeur de l'offre inclut le terme de recherche (insensible à la casse).
+
     // Vérification de la Ville (location)
     const matchesCity = !cityFilter || offer.location.toLowerCase().includes(cityFilter)
 
     // Vérification du Contrat (employment_type.name)
-    const contract = offer.employment_type ? offer.employment_type.name : ''
-    const matchesContract = !contractFilter || contract.toLowerCase().includes(contractFilter)
+    const matchesContract =
+      !contractFilter || offer.employment_type.name.toLowerCase().includes(contractFilter)
 
     // Vérification du Nom/Titre (title)
     const matchesName = !nameFilter || offer.title.toLowerCase().includes(nameFilter)
@@ -142,11 +60,128 @@ const filteredOffers = computed(() => {
     // Vérification du Domaine (category)
     const matchesDomain = !domainFilter || offer.category.toLowerCase().includes(domainFilter)
 
-    // L'offre est incluse si TOUTES les conditions de filtre (non vides) sont remplies
+    // L'offre doit satisfaire TOUS les filtres qui ont été saisis.
     return matchesCity && matchesContract && matchesName && matchesDomain
   })
 })
-// FIN NOUVEAU
+
+// --- 3. Fonctions d'API et de Logique ---
+// Fonction pour récupérer toutes les offres d'emploi disponibles.
+const readOffer = async () => {
+  try {
+    // Envoie une requête GET vers le endpoint qui liste toutes les offres.
+    const responses = await axios.get('http://127.0.0.1:8000/api/allOffer')
+    // Met à jour la variable réactive 'offers' avec le tableau de données.
+    offers.value = responses.data.data
+  } catch (err) {
+    // Affiche l'erreur en console si la requête échoue.
+    console.error('Erreur lors de la récupération des offres:', err)
+  }
+}
+
+// Fonction pour vérifier si une offre spécifique (par ID) est dans les favoris de l'utilisateur.
+// Utilise le Set pour une recherche rapide O(1).
+const isFavorite = (offerId) => favoritesIds.value.has(offerId)
+
+// Fonction pour récupérer les IDs des offres favorites de l'utilisateur connecté.
+const fetchFavorites = async () => {
+  // Condition de garde : sort si l'utilisateur n'est pas connecté ou est une entreprise.
+  if (!userStore.isAuthenticated || isCompany.value) {
+    return
+  }
+
+  const token = localStorage.getItem('auth_token')
+  // Condition de garde si le token est manquant malgré l'état d'authentification.
+  if (!token) {
+    console.warn("Jeton d'authentification manquant pour charger les favoris.")
+    return
+  }
+
+  try {
+    // Envoie une requête GET vers le endpoint des favoris.
+    const responses = await axios.get('http://127.0.0.1:8000/api/favorites', {
+      headers: {
+        // Ajoute l'en-tête d'autorisation Bearer Token pour les routes protégées.
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    // Extrait les IDs : crée un tableau contenant uniquement l'ID de chaque offre favorite.
+    const ids = responses.data.data.map((offer) => offer.id)
+    // Met à jour le Set réactif 'favoritesIds' pour une utilisation rapide.
+    favoritesIds.value = new Set(ids)
+  } catch (err) {
+    console.error('Erreur lors de la récupération des favoris:', err)
+    // Gestion des erreurs (401, etc.)
+  }
+}
+
+// Fonction pour ajouter ou retirer une offre des favoris.
+const toggleFavorite = async (offerId) => {
+  // Condition de garde : l'action nécessite une authentification et n'est pas pour une company.
+  if (!userStore.isAuthenticated || isCompany.value) {
+    return
+  }
+
+  const token = localStorage.getItem('auth_token')
+  if (!token) return // Condition de garde si le token est manquant.
+
+  const isCurrentlyFavorite = isFavorite(offerId)
+
+  // Détermine l'action et la méthode HTTP appropriées.
+  const action = isCurrentlyFavorite ? 'remove' : 'add'
+  const method = isCurrentlyFavorite ? 'delete' : 'post'
+  // Construit l'URL complète dynamiquement.
+  const url = `http://127.0.0.1:8000/api/favorites/${action}/${offerId}`
+
+  try {
+    // Exécute la requête HTTP (POST pour ajouter, DELETE pour retirer).
+    await axios({
+      method: method,
+      url: url,
+      headers: {
+        // Ajoute le token pour l'autorisation.
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    // Met à jour l'état local (favoritesIds) immédiatement après le succès de l'API.
+    if (isCurrentlyFavorite) {
+      favoritesIds.value.delete(offerId) // Retirer l'ID du Set
+    } else {
+      favoritesIds.value.add(offerId) // Ajouter l'ID au Set
+    }
+
+    // OPTIMISATION/CORRECTION : on force Vue à détecter la modification du Set.
+    // Vue ne réagit pas aux méthodes .add() ou .delete() d'un Set réactif,
+    // donc on lui assigne une nouvelle instance de Set pour forcer la mise à jour des composants dépendants.
+    favoritesIds.value = new Set(favoritesIds.value)
+  } catch (err) {
+    console.error('Erreur lors de la mise à jour des favoris:', err)
+    alert('Erreur lors de la mise à jour des favoris. Veuillez réessayer.')
+  }
+}
+
+// --- 4. Hooks du Cycle de Vie ---
+// 'onMounted' est appelé une fois que le composant est monté dans le DOM.
+// 1. Appel de la fonction pour récupérer toutes les offres.
+onMounted(readOffer)
+
+// 2. Logique d'authentification et de chargement des favoris.
+onMounted(() => {
+  // Vérifie si un token d'authentification est présent au chargement de la page.
+  if (localStorage.getItem('auth_token') !== null) {
+    // Si oui, on met à jour l'état d'authentification dans le store (si non fait par l'intercepteur).
+    userStore.isAuthenticated = true
+    // Lance le chargement des favoris de l'utilisateur connecté.
+    fetchFavorites()
+  }
+})
+
+// --- 5. Exportation (nécessaire avec <script setup>) ---
+// Rendre les variables et fonctions disponibles pour la partie <template> du composant.
+// (Inclus implicitement par <script setup> mais listé ici pour la clarté conceptuelle)
+// { offers, searchCity, searchContract, searchName, searchDomain, filteredOffers, isFavorite, toggleFavorite }
 </script>
 
 <template>
@@ -183,6 +218,7 @@ const filteredOffers = computed(() => {
       />
     </div>
   </div>
+
   <div class="offers-grid">
     <div v-if="filteredOffers.length === 0" class="no-results-message">
       <p>
@@ -246,6 +282,7 @@ const filteredOffers = computed(() => {
               <path d="M12 6v6l4 2" />
             </svg>
             <span>{{ offer.created_at }}</span>
+            <!-- changer le format de la date -->
           </div>
         </div>
 

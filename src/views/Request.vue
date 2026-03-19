@@ -6,6 +6,7 @@ import axios from 'axios'
 // ref est une syntaxe qui permet de dynamiser une variable pour l'afficher dans le html
 const requests = ref([])
 const userStore = useUserStore()
+const nbRequest = ref([])
 
 //  on recup le token d'authentification depuis le localStorage
 const token = localStorage.getItem('auth_token')
@@ -29,8 +30,6 @@ onMounted(readRequest)
 // Vérifier si l'utilisateur est admin
 const isAdmin = computed(() => userStore.user?.role === 'admin')
 
-const nbRequest = ref([])
-
 // Logique pour compter (inchangée)
 const count = async () => {
   try {
@@ -38,27 +37,6 @@ const count = async () => {
     nbRequest.value = responses.data.Request
   } catch (err) {
     console.log(err)
-  }
-}
-
-// Fonction de suppression (appel de l'API DELETE)
-const deleteRequest = async (requestId) => {
-  // on remplace l'alert() par une confirmation modale si possible, ici on simule.
-  if (confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) {
-    try {
-      await axios.delete(`http://127.0.0.1:8000/api/deleteRequest/${requestId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      // Retirer la demande du tableau local sans recharger toute la page
-      requests.value = requests.value.filter((req) => req.id !== requestId)
-      console.log(`Demande ID ${requestId} supprimée.`)
-    } catch (err) {
-      console.error('Erreur lors de la suppression de la demande:', err)
-      prompt('Erreur lors de la suppression. Veuillez réessayer.')
-    }
   }
 }
 
@@ -85,51 +63,21 @@ onMounted(count)
         </div>
 
         <div class="card-body">
-          <h4 class="request-title">{{ request.title }}</h4>
           <h4 class="request-type">{{ request.type }}</h4>
+          <h4 class="request-title">{{ request.title }}</h4>
           <p class="request-description">{{ request.description }}</p>
 
           <div class="request-meta">
             <div class="meta-item">
               <span>{{ request.created_at }}</span>
             </div>
-            <span class="badge badge-pending">{{ request.status }}</span>
+            <span
+              class="badge"
+              :class="request.status === 'Validée' ? 'badge-active' : 'badge-pending'"
+            >
+              {{ request.status }}
+            </span>
           </div>
-        </div>
-
-        <div class="card-footer card-actions" v-if="isAdmin">
-          <button
-            type="button"
-            class="btn-delete"
-            title="Supprimer cette demande"
-            @click="deleteRequest(request.id)"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              fill="currentColor"
-              viewBox="0 0 16 16"
-            >
-              <path
-                d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"
-              />
-            </svg>
-          </button>
-
-          <button type="button" class="btn-toggle" title="Valider/Changer le statut">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              fill="currentColor"
-              viewBox="0 0 16 16"
-            >
-              <path
-                d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"
-              />
-            </svg>
-          </button>
         </div>
       </div>
     </div>
@@ -221,10 +169,9 @@ h1 {
 
 /* Corps de carte */
 .card-body {
-  padding: 20px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .request-title {
@@ -275,17 +222,17 @@ h1 {
 
 .badge-type {
   background: #e3f2fd;
-  color: #1976d2;
+  color: #d2b019;
 }
 
 .badge-pending {
-  background: #fff3cd;
-  color: #856404;
+  background: #fcd75d;
+  color: black;
 }
 
 .badge-active {
-  background: #d4edda;
-  color: #155724;
+  background: #a7f7b9;
+  color: green;
 }
 
 /* Pied de carte et Actions Admin */

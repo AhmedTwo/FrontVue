@@ -1,526 +1,613 @@
-<script setup></script>
+<script setup>
+import { onMounted, ref } from 'vue'
+import axios from 'axios'
+import { RouterLink } from 'vue-router'
+
+const token = localStorage.getItem('auth_token')
+const currentTab = ref('offers') // Onglet par défaut
+
+// console.log(token)
+
+const offers = ref([])
+const companys = ref([])
+const users = ref([])
+const requests = ref([])
+
+const fetchData = async () => {
+  try {
+    const [resOffers, resCompanys, resRequests, resUsers] = await Promise.all([
+      axios.get('http://127.0.0.1:8000/api/allOffer'),
+      axios.get('http://127.0.0.1:8000/api/allCompany'),
+      axios.get('http://127.0.0.1:8000/api/allRequest'),
+      axios.get('http://127.0.0.1:8000/api/allUser', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    ])
+    offers.value = resOffers.data.data
+    companys.value = resCompanys.data.data
+    requests.value = resRequests.data.data
+    users.value = resUsers.data.data
+  } catch (err) {
+    console.error('Erreur API:', err)
+  }
+}
+
+onMounted(fetchData)
+
+// Fonction de suppression (appel de l'API DELETE)
+const deleteUser = async (userId) => {
+  // on remplace l'alert() par une confirmation modale si possible, ici on simule.
+  if (confirm('Êtes-vous sûr de vouloir supprimer cette utilisateur ?')) {
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/deleteUser/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      // Retirer l'utilisateur du tableau local sans recharger toute la page
+      users.value = users.value.filter((use) => use.id !== userId)
+      console.log(`Utilisateur ID ${userId} supprimée.`)
+    } catch (err) {
+      console.error("Erreur lors de la suppression de l'utilisateur:", err)
+      prompt('Erreur lors de la suppression. Veuillez réessayer.')
+    }
+  }
+}
+
+const deleteOffer = async (offerId) => {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cette offre ?')) {
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/deleteOffer/${offerId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      offers.value = offers.value.filter((off) => off.id !== offerId)
+      console.log(`Offre ID ${offerId} supprimée.`)
+    } catch (err) {
+      console.error("Erreur lors de la suppression de l'offre:", err)
+      prompt('Erreur lors de la suppression. Veuillez réessayer.')
+    }
+  }
+}
+
+const deleteCompany = async (companyId) => {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cette société ?')) {
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/deleteCompany/${companyId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      companys.value = companys.value.filter((com) => com.id !== companyId)
+      console.log(`Société ID ${companyId} supprimée.`)
+    } catch (err) {
+      console.error('Erreur lors de la suppression de la société:', err)
+      prompt('Erreur lors de la suppression. Veuillez réessayer.')
+    }
+  }
+}
+
+const deleteRequest = async (requestId) => {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) {
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/deleteRequest/${requestId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      requests.value = requests.value.filter((req) => req.id !== requestId)
+      console.log(`Demande ID ${requestId} supprimée.`)
+    } catch (err) {
+      console.error('Erreur lors de la suppression de la demande:', err)
+      prompt('Erreur lors de la suppression. Veuillez réessayer.')
+    }
+  }
+}
+
+// Fonction de changement de status
+const toggleRequest = async (requestId) => {
+  if (!token) {
+    console.error("Jeton d'authentification manquant.")
+    return
+  }
+  try {
+    const response = await axios.patch(
+      `http://127.0.0.1:8000/api/toggleRequestStatus/${requestId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    )
+
+    // Mise à jour de l'état local (très important pour le rendu)
+    const newStatus = response.data.new_status
+
+    // Trouver la demande dans le tableau réactif 'requests' et mettre à jour son statut
+    const index = requests.value.findIndex((req) => req.id === requestId)
+    if (index !== -1) {
+      requests.value[index].status = newStatus
+    }
+
+    console.log(`Statut de la demande ID ${requestId} mis à jour à : ${newStatus}`)
+  } catch (err) {
+    console.error('Erreur lors de la bascule du statut:', err)
+    alert('Erreur lors de la mise à jour du statut. Veuillez réessayer.')
+  }
+}
+</script>
 
 <template>
   <div class="header-section">
     <h1>MON TABLEAU DE BORD</h1>
-    <p class="subtitle">Gérez vos utilisateurs, offres et sociétés en un seul endroit.</p>
+    <p class="subtitle">Gérez vos données efficacement.</p>
   </div>
 
-  <div class="dashboard-container">
-    <!-- UTILISATEURS -->
-    <div class="table-section">
-      <div class="section-header bg-primary"><h2>LES UTILISATEURS</h2></div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>NOM</th>
-              <th>PRÉNOM</th>
-              <th>EMAIL</th>
-              <th>RÔLE</th>
-              <th>ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>5</td>
-              <td>Seghiri</td>
-              <td>Ahmed</td>
-              <td>seghiriahmed9@gmail.com</td>
-              <td><span class="badge badge-admin">Admin</span></td>
-              <td class="actions-cell">
-                <a href="/Profil/UpdateProfil" title="Modifier">
-                  <button class="btn-action btn-edit">
-                    <!-- ✏️ Modifier -->
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M16.862 4.487l2.651 2.651m-1.768-4.419a2.25 2.25 0 113.182 3.182L7.5 19.5H3v-4.5L17.745 2.719z"
-                      />
-                    </svg>
-                  </button>
-                </a>
-                <button class="btn-action btn-delete" title="Supprimer">
-                  <!-- 🗑️ Supprimer -->
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 7h12M9 7v10m6-10v10M4 7h16l-1 13H5L4 7zm5-3h6a1 1 0 011 1v1H8V5a1 1 0 011-1z"
-                    />
-                  </svg>
-                </button>
-              </td>
-            </tr>
+  <div class="stats-container">
+    <div class="stat-card" @click="currentTab = 'offers'">
+      <h3>Offres</h3>
+      <p class="stat-number">{{ offers.length }}</p>
+    </div>
+    <div class="stat-card" @click="currentTab = 'companys'">
+      <h3>Sociétés</h3>
+      <p class="stat-number">{{ companys.length }}</p>
+    </div>
+    <div class="stat-card" @click="currentTab = 'users'">
+      <h3>Utilisateurs</h3>
+      <p class="stat-number">{{ users.length }}</p>
+    </div>
+    <div class="stat-card" @click="currentTab = 'requests'">
+      <h3>Demandes</h3>
+      <p class="stat-number">{{ requests.length }}</p>
+    </div>
+  </div>
 
-            <tr>
-              <td>6</td>
-              <td>Dupont</td>
-              <td>Julie</td>
-              <td>julie.dupont@email.com</td>
-              <td><span class="badge badge-user">Utilisateur</span></td>
-              <td class="actions-cell">
-                <a href="/Profil/UpdateProfil" title="Modifier">
-                  <button class="btn-action btn-edit">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M16.862 4.487l2.651 2.651m-1.768-4.419a2.25 2.25 0 113.182 3.182L7.5 19.5H3v-4.5L17.745 2.719z"
-                      />
-                    </svg>
-                  </button>
-                </a>
-                <button class="btn-action btn-delete" title="Supprimer">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 7h12M9 7v10m6-10v10M4 7h16l-1 13H5L4 7zm5-3h6a1 1 0 011 1v1H8V5a1 1 0 011-1z"
-                    />
-                  </svg>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <div class="tab-navigation">
+    <button :class="{ active: currentTab === 'offers' }" @click="currentTab = 'offers'">
+      Offres d'emploi
+    </button>
+    <button :class="{ active: currentTab === 'companys' }" @click="currentTab = 'companys'">
+      Sociétés
+    </button>
+    <button :class="{ active: currentTab === 'users' }" @click="currentTab = 'users'">
+      Utilisateurs
+    </button>
+    <button :class="{ active: currentTab === 'requests' }" @click="currentTab = 'requests'">
+      Demandes
+    </button>
+  </div>
+
+  <div class="content-area">
+    <div v-if="currentTab === 'offers'" class="section fade-in">
+      <h2 class="section-title">Offres d'emploi</h2>
+      <div class="dashboard-container">
+        <div v-for="offer in offers" :key="offer.id" class="card">
+          <div class="card-content">
+            <div class="card-image">
+              <img :src="'http://127.0.0.1:8000' + offer.image_url" :alt="offer.title" />
+            </div>
+            <div class="card-details">
+              <span class="title">{{ offer.title }}</span>
+              <span class="badge">{{ offer.employment_type?.name }}</span>
+              <span>Inscrits: {{ offer.participants_count }}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <RouterLink
+              :to="{ name: 'Modif Offre Company', params: { id: offer.id } }"
+              class="btn btn-edit"
+            >
+              Modifier
+            </RouterLink>
+            <button
+              class="btn btn-delete"
+              title="Supprimer cette offre"
+              @click="deleteOffer(offer.id)"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- OFFRES -->
-    <div class="table-section">
-      <div class="section-header bg-secondary"><h2>LES OFFRES</h2></div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>TITRE</th>
-              <th>ADRESSE</th>
-              <th>DOMAINE</th>
-              <th>DATE DE CRÉATION</th>
-              <th>ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1</td>
-              <td>Développeur Frontend</td>
-              <td>Paris</td>
-              <td>Informatique</td>
-              <td>20-Oct-2025</td>
-              <td class="actions-cell">
-                <a href="/offers/UpdateOffer" title="Modifier">
-                  <button class="btn-action btn-edit">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M16.862 4.487l2.651 2.651m-1.768-4.419a2.25 2.25 0 113.182 3.182L7.5 19.5H3v-4.5L17.745 2.719z"
-                      />
-                    </svg>
-                  </button>
-                </a>
-                <a href="/offers/DeleteOffer" title="Supprimer">
-                  <button class="btn-action btn-delete">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 7h12M9 7v10m6-10v10M4 7h16l-1 13H5L4 7zm5-3h6a1 1 0 011 1v1H8V5a1 1 0 011-1z"
-                      />
-                    </svg>
-                  </button>
-                </a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div v-if="currentTab === 'companys'" class="section fade-in">
+      <h2 class="section-title">Sociétés</h2>
+      <div class="dashboard-container">
+        <div v-for="company in companys" :key="company.id" class="card">
+          <div class="card-content">
+            <div class="card-image">
+              <img :src="'http://127.0.0.1:8000/storage/' + company.logo" :alt="company.name" />
+            </div>
+            <div class="card-details">
+              <span class="title">{{ company.name }}</span>
+              <span class="badge">{{ company.industry }}</span>
+              <span class="meta">{{ company.address }}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button
+              class="btn btn-delete"
+              title="Supprimer cette utilisateur"
+              @click="deleteCompany(company.id)"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- SOCIÉTÉS -->
-    <div class="table-section">
-      <div class="section-header bg-tertiary"><h2>LES SOCIÉTÉS</h2></div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>NOM</th>
-              <th>ADRESSE</th>
-              <th>DOMAINE</th>
-              <th>N° SIRET</th>
-              <th>STATUT</th>
-              <th>ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1</td>
-              <td>TechNova</td>
-              <td>Paris</td>
-              <td>Informatique</td>
-              <td>123456789</td>
-              <td><button class="btn-status btn-validated">Approuvée</button></td>
-              <td class="actions-cell">
-                <a href="/companys/CompanyDetails" title="Détails">
-                  <button class="btn-action btn-info">
-                    <!-- 👁️ Détails -->
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                  </button>
-                </a>
-                <a href="/Dashboard_Admin/UpdateCompany" title="Modifier">
-                  <button class="btn-action btn-edit">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M16.862 4.487l2.651 2.651m-1.768-4.419a2.25 2.25 0 113.182 3.182L7.5 19.5H3v-4.5L17.745 2.719z"
-                      />
-                    </svg>
-                  </button>
-                </a>
-                <a href="/companys/DeleteCompany" title="Supprimer">
-                  <button class="btn-action btn-delete">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 7h12M9 7v10m6-10v10M4 7h16l-1 13H5L4 7zm5-3h6a1 1 0 011 1v1H8V5a1 1 0 011-1z"
-                      />
-                    </svg>
-                  </button>
-                </a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div v-if="currentTab === 'users'" class="section fade-in">
+      <h2 class="section-title">Utilisateurs</h2>
+      <div class="dashboard-container">
+        <div v-for="user in users" :key="user.id" class="card">
+          <div class="card-content">
+            <div class="card-image">
+              <img :src="'http://127.0.0.1:8000/storage/' + user.photo" class="user-avatar" />
+            </div>
+            <div class="card-details">
+              <span class="title">{{ user.prenom }} {{ user.nom }}</span>
+              <span class="badge">{{ user.role }}</span>
+              <span>{{ user.email }}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button
+              class="btn btn-delete"
+              title="Supprimer cette utilisateur"
+              @click="deleteUser(user.id)"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="currentTab === 'requests'" class="section fade-in">
+      <h2 class="section-title">Demandes</h2>
+      <div class="dashboard-container">
+        <div v-for="request in requests" :key="request.id" class="card">
+          <div class="card-content">
+            <div class="card-details">
+              <span class="meta"
+                ><span style="color: black; font-weight: 600; font-size: 20px">Titre : </span
+                >{{ request.title }}</span
+              >
+              <span class="badge">{{ request.type }}</span>
+              <span class="meta"
+                ><span style="color: black; font-weight: 600; font-size: 20px">Description : </span
+                >{{ request.description }}</span
+              >
+              <span class="meta"
+                ><span style="color: black; font-weight: 600; font-size: 20px">Statut : </span
+                >{{ request.status }}</span
+              >
+            </div>
+          </div>
+          <div class="card-actions">
+            <button
+              class="btn btn-delete"
+              title="Supprimer cette utilisateur"
+              @click="deleteRequest(request.id)"
+            >
+              Supprimer
+            </button>
+            <button type="button" class="btn-toggle" @click="toggleRequest(request.id)">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+              >
+                <path
+                  d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* COULEURS THÉMATIQUES */
-/* Primaire (Utilisateurs/Accent): #0d6efd */
-/* Secondaire (Offres): #198754 (Vert) */
-/* Tertiaire (Sociétés): #ffc107 (Jaune/Orange) */
-/* Supprimer/Danger: #dc3545 (Rouge) */
-/* Editer/Info: #0dcaf0 (Cyan) */
-/* Fond de page: #f8f9fa */
-
-/* -------------------
-   EN-TÊTE
-   ------------------- */
-.header-section {
-  text-align: center;
-  margin-top: 30px; /* Marge réduite */
-  margin-bottom: 30px;
+.section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
 }
 
-h1 {
-  font-size: 2rem; /* Légèrement réduit */
-  font-weight: 800;
-  color: #212529;
+.content-area {
+  background-color: rgba(128, 128, 128, 0.205);
+  padding: 20px 0;
+}
+
+/* --- EN-TÊTE --- */
+.header-section {
+  text-align: left;
+  padding: 2rem 1.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #ececec;
+  text-align: center;
+}
+
+.header-section h1 {
+  color: #1a1a1a;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
   letter-spacing: -0.5px;
-  margin-bottom: 5px;
 }
 
 .subtitle {
-  font-size: 0.95rem;
-  color: #64748b;
-  font-weight: 500;
+  color: #71717a;
+  font-size: 1rem;
+  margin-top: 5px;
 }
 
-/* -------------------
-   CONTENEUR PRINCIPAL
-   ------------------- */
+/* --- STATISTIQUES --- */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 2.5rem;
+  padding: 0 1.5rem;
+}
+
+.stat-card {
+  background: #1538ff49;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 2px solid;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  border: 2px solid #1115fa;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.473);
+}
+
+.stat-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: black;
+  font-weight: 700;
+}
+
+.stat-card .stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #18181b;
+  margin: 8px 0 0 0;
+}
+
+/* --- NAVIGATION PAR ONGLETS --- */
+.tab-navigation {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: #f4f4f5;
+  border-radius: 12px;
+  width: fit-content;
+  margin: 0 auto 2.5rem auto;
+}
+
+.tab-navigation button {
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  color: #71717a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.tab-navigation button.active {
+  background: #ffffff;
+  color: blue;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* --- GRILLE ET CARTES --- */
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #18181b;
+  margin-bottom: 1.5rem;
+}
+
 .dashboard-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  margin-bottom: 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 2px solid;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 30px; /* Gap réduit entre les sections */
+  transition: transform 0.2s ease;
 }
 
-/* -------------------
-   SECTION DE TABLEAU
-   ------------------- */
-.table-section {
-  background: white;
-  border-radius: 12px; /* Coins arrondis */
-  overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e9ecef;
-  transition: all 0.3s ease;
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
+  border: 2px solid #1115fa;
 }
 
-.table-section:hover {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+.card-content {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-/* En-tête de section */
-.section-header {
-  padding: 15px 20px; /* Padding réduit */
-  border-bottom: 1px solid #e9ecef;
+.card-image img {
+  width: 90px;
+  height: 90%;
+  object-fit: cover;
+  border-radius: 10px;
 }
 
-.section-header h2 {
-  margin: 0;
-  font-size: 1.2rem; /* Taille réduite */
+.user-avatar {
+  border-radius: 50% !important;
+}
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card-details .title {
+  font-size: 1.2rem;
   font-weight: 700;
-  color: white;
-  letter-spacing: 0.5px;
+  color: #18181b;
+  margin-bottom: 10%;
 }
 
-.bg-primary {
-  background-color: #0d6efd;
-}
-.bg-secondary {
-  background-color: #198754;
-}
-.bg-tertiary {
-  background-color: #ffc107;
+.card-details span {
+  font-size: 0.85rem;
+  color: #71717a;
 }
 
-/* Wrapper du tableau */
-.table-wrapper {
-  overflow-x: auto;
-  padding: 15px; /* Padding réduit */
-}
-
-/* -------------------
-   TABLEAU
-   ------------------- */
-table {
-  width: 100%;
-  border-collapse: separate; /* Permet un border-radius pour les coins */
-  border-spacing: 0;
-  min-width: 700px; /* S'assure que le tableau est scrollable horizontalement si nécessaire */
-}
-
-thead th {
-  padding: 12px 15px; /* Padding réduit */
-  text-align: left;
-  font-weight: 700;
-  font-size: 0.8rem; /* Très petit en-tête */
-  color: #495057;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-tbody td {
-  padding: 12px 15px; /* Padding réduit */
-  border-bottom: 1px solid #f0f0f0;
-  color: #4a4a4a;
-  font-size: 0.9rem;
-}
-
-tbody tr:hover {
-  background: #e9f3fe; /* Bleu clair au survol */
-  /* transform: scale(1.005); */ /* Retiré pour la compacité */
-}
-
-tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* -------------------
-   BADGES (RÔLES & STATUTS)
-   ------------------- */
 .badge {
   display: inline-block;
-  padding: 4px 10px; /* Padding très réduit */
-  border-radius: 15px;
-  font-size: 0.75rem; /* Très petit */
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.badge-admin {
-  background-color: #0d6efd;
-  color: white;
-}
-.badge-user {
-  background-color: #e9ecef;
-  color: #495057;
-}
-.badge-company {
-  background-color: #ffc107;
-  color: #343a40;
-}
-
-/* Boutons de statut (Sociétés) */
-.btn-status {
-  padding: 6px 10px;
-  border: none;
+  padding: 2px 10px;
+  background: #f4f4f5;
+  color: #3f3f46;
   border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.btn-validated {
-  background-color: #198754;
-  color: white;
-}
-.btn-pending {
-  background-color: #ffc107;
-  color: #212529;
-}
-.btn-rejected {
-  background-color: #dc3545;
-  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin: 6px 0;
+  width: fit-content;
 }
 
-/* -------------------
-   BOUTONS D'ACTION (EDITION / SUPPRESSION)
-   ------------------- */
-.actions-cell {
+/* --- BOUTONS D'ACTION --- */
+.card-actions {
   display: flex;
-  align-items: center;
-  gap: 8px; /* Espacement réduit */
+  gap: 8px;
+  margin-top: auto;
 }
 
-.btn-action {
-  width: 30px; /* Taille fixe */
-  height: 30px;
-  border-radius: 50%;
+.btn {
+  flex: 1;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.btn a {
+  padding: 8px;
+  text-decoration: none;
+  display: block;
+}
+
+.btn-edit {
+  background: #18181b;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+  padding: 8px;
+}
+
+.btn-edit:hover {
+  background: #3f3f46;
+  color: white;
+}
+
+.btn-delete {
+  background: #ffffff;
+  border-color: #fee2e2;
+  color: red;
+  padding: 2.5%;
+}
+
+.btn-delete a {
+  color: #ef4444;
+}
+
+.btn-delete:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.btn-toggle {
   border: none;
   cursor: pointer;
-  display: flex;
+  padding: 8px;
+  border-radius: 50%;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  padding: 0;
+  background-color: #f8f9fa;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-action svg {
-  width: 14px;
-  height: 14px;
+.btn-toggle svg {
+  width: 20px;
+  height: 20px;
 }
 
-/* Modifier (Bleu) */
-.btn-edit {
-  background-color: #0d6efd;
+/* Styles spécifiques : Toggle/Valider (Vert/Bleu) */
+.btn-toggle {
+  color: #28a745; /* Vert pour la validation */
+  border: 1px solid #28a745;
+}
+
+.btn-toggle:hover {
+  background: #28a745;
   color: white;
-}
-.btn-edit:hover {
-  background-color: #0b5ed7;
   transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
-/* Supprimer (Rouge) */
-.btn-delete {
-  background-color: #dc3545;
-  color: white;
-}
-.btn-delete:hover {
-  background-color: #c9302c;
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+/* --- ANIMATION --- */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
 }
 
-/* Détails (Cyan) */
-.btn-info {
-  background-color: #0dcaf0;
-  color: white;
-}
-.btn-info:hover {
-  background-color: #0aabdb;
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(13, 202, 240, 0.3);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-/* -------------------
-   RESPONSIVE (Gestion du défilement horizontal)
-   ------------------- */
-
-@media (max-width: 768px) {
-  /* Le wrapper gère le scroll horizontal, mais le conteneur lui-même est optimisé */
+/* --- RESPONSIVE --- */
+@media (max-width: 640px) {
+  .stats-container {
+    grid-template-columns: 1fr;
+  }
   .dashboard-container {
-    padding: 0 10px;
+    grid-template-columns: 1fr;
   }
-
-  h1 {
-    font-size: 1.8rem;
-  }
-
-  .table-section {
-    border-radius: 8px;
+  .tab-navigation {
+    width: 100%;
+    overflow-x: auto;
   }
 }
 </style>

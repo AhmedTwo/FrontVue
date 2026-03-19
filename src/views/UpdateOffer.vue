@@ -85,7 +85,7 @@ const updateOffer = async () => {
     )
 
     alert('✅ Offre mise à jour avec succès')
-    router.push('/Dashboard_Company')
+    router.back()
   } catch (error) {
     console.error('Erreur lors de la mise à jour :', error)
     alert("❌ Erreur lors de la mise à jour de l'offre.")
@@ -171,7 +171,7 @@ onMounted(loadOffer)
 
       <div class="form-actions">
         <button type="submit" class="btn-update" title="Modifier">Mettre à jour</button>
-        <a href="/Dashboard_Company" class="btn-cancel">Annuler</a>
+        <button type="button" @click.prevent="router.back()" class="btn-cancel">Annuler</button>
       </div>
     </form>
   </div>

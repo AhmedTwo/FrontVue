@@ -298,7 +298,7 @@ onMounted(() => {
   object-fit: cover;
   opacity: 0.1;
   z-index: 1;
-  margin-top: -2%;
+  margin-top: -3%;
 }
 
 .hero {
