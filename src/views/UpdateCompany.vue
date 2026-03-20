@@ -43,11 +43,14 @@ const loadCompany = async () => {
   const token = localStorage.getItem('auth_token')
 
   try {
-    const response = await axios.get(`http://127.0.0.1:8000/api/companyById/${companyId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/api/companyById/${companyId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
 
     // Détecte automatiquement si les données sont dans "data" ou pas
     const data = response.data.data ? response.data.data : response.data
@@ -98,7 +101,7 @@ const updateCompany = async () => {
   // }
 
   try {
-    await axios.post(`http://127.0.0.1:8000/api/companyUpdate/${companyId}`, formData, {
+    await axios.post(`${import.meta.env.VITE_API_URL}/api/companyUpdate/${companyId}`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
         // Axios gère Content-Type: multipart/form-data automatiquement avec FormData
@@ -258,7 +261,7 @@ onMounted(loadCompany)
         <div v-if="company.logo" class="current-logo-display">
           <p>Logo actuel :</p>
           <img
-            :src="`http://127.0.0.1:8000/storage/${company.logo}`"
+            :src="`${import.meta.env.VITE_API_URL}/storage/${company.logo}`"
             alt="Logo actuel de l'entreprise"
             class="company-logo-preview"
           />

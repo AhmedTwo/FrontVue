@@ -16,10 +16,10 @@ const requests = ref([])
 const fetchData = async () => {
   try {
     const [resOffers, resCompanys, resRequests, resUsers] = await Promise.all([
-      axios.get('http://127.0.0.1:8000/api/allOffer'),
-      axios.get('http://127.0.0.1:8000/api/allCompany'),
-      axios.get('http://127.0.0.1:8000/api/allRequest'),
-      axios.get('http://127.0.0.1:8000/api/allUser', {
+      axios.get(`${import.meta.env.VITE_API_URL}/api/allOffer`),
+      axios.get(`${import.meta.env.VITE_API_URL}/api/allCompany`),
+      axios.get(`${import.meta.env.VITE_API_URL}/api/allRequest`),
+      axios.get(`${import.meta.env.VITE_API_URL}/api/allUser`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
     ])
@@ -39,7 +39,7 @@ const deleteUser = async (userId) => {
   // on remplace l'alert() par une confirmation modale si possible, ici on simule.
   if (confirm('Êtes-vous sûr de vouloir supprimer cette utilisateur ?')) {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/deleteUser/${userId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/deleteUser/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -58,7 +58,7 @@ const deleteUser = async (userId) => {
 const deleteOffer = async (offerId) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette offre ?')) {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/deleteOffer/${offerId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/deleteOffer/${offerId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -76,7 +76,7 @@ const deleteOffer = async (offerId) => {
 const deleteCompany = async (companyId) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette société ?')) {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/deleteCompany/${companyId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/deleteCompany/${companyId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -94,7 +94,7 @@ const deleteCompany = async (companyId) => {
 const deleteRequest = async (requestId) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/deleteRequest/${requestId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/deleteRequest/${requestId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -117,7 +117,7 @@ const toggleRequest = async (requestId) => {
   }
   try {
     const response = await axios.patch(
-      `http://127.0.0.1:8000/api/toggleRequestStatus/${requestId}`,
+      `${import.meta.env.VITE_API_URL}/api/toggleRequestStatus/${requestId}`,
       {},
       {
         headers: {
@@ -190,7 +190,7 @@ const toggleRequest = async (requestId) => {
         <div v-for="offer in offers" :key="offer.id" class="card">
           <div class="card-content">
             <div class="card-image">
-              <img :src="'http://127.0.0.1:8000' + offer.image_url" :alt="offer.title" />
+              <img :src="`${import.meta.env.VITE_API_URL}' + offer.image_url" :alt="offer.title" />
             </div>
             <div class="card-details">
               <span class="title">{{ offer.title }}</span>
@@ -223,7 +223,7 @@ const toggleRequest = async (requestId) => {
         <div v-for="company in companys" :key="company.id" class="card">
           <div class="card-content">
             <div class="card-image">
-              <img :src="'http://127.0.0.1:8000/storage/' + company.logo" :alt="company.name" />
+              <img :src="import.meta.env.VITE_API_URL + 'storage/' + company.logo" />
             </div>
             <div class="card-details">
               <span class="title">{{ company.name }}</span>
@@ -250,7 +250,11 @@ const toggleRequest = async (requestId) => {
         <div v-for="user in users" :key="user.id" class="card">
           <div class="card-content">
             <div class="card-image">
-              <img :src="'http://127.0.0.1:8000/storage/' + user.photo" class="user-avatar" />
+              <img
+                :src="import.meta.env.VITE_API_URL + '/storage/' + user.photo"
+                class="user-avatar"
+                :alt="user.nom"
+              />
             </div>
             <div class="card-details">
               <span class="title">{{ user.prenom }} {{ user.nom }}</span>

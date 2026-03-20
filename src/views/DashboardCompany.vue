@@ -20,7 +20,7 @@ const loadOffers = async () => {
   }
 
   try {
-    const responses = await axios.get('http://127.0.0.1:8000/api/myOffers', {
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/myOffers`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     offers.value = responses.data.data
@@ -141,7 +141,7 @@ onMounted(() => {
 
         <div class="detail-card card-description">
           <img
-            :src="'http://127.0.0.1:8000/storage/' + company.logo"
+            :src="`${import.meta.env.VITE_API_URL}/storage/` + company.logo"
             :alt="`Logo ${company.name}`"
             class="company-logo"
             v-if="company.logo"
@@ -187,7 +187,7 @@ onMounted(() => {
     <div class="offers-grid">
       <div class="offer-card" v-for="offer in offers" :key="offer.id">
         <div class="card-image">
-          <img :src="'http://127.0.0.1:8000' + offer.image_url" alt="Image offre" />
+          <img :src="`${import.meta.env.VITE_API_URL}` + offer.image_url" alt="Image offre" />
           <div class="image-overlay">
             <span class="badge badge-employment">{{ offer.employment_type.name }}</span>
             <span class="badge badge-category">{{ offer.category }}</span>

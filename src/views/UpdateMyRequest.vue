@@ -22,11 +22,14 @@ const loadRequest = async () => {
   const token = localStorage.getItem('auth_token')
 
   try {
-    const response = await axios.get(`http://127.0.0.1:8000/api/requestById/${requestId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/api/requestById/${requestId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
 
     // Détecte automatiquement si les données sont dans "data" ou pas
     const data = response.data.data ? response.data.data : response.data
@@ -51,7 +54,7 @@ const updateRequest = async () => {
 
   try {
     await axios.post(
-      `http://127.0.0.1:8000/api/requestUpdate/${requestId}`,
+      `${import.meta.env.VITE_API_URL}/api/requestUpdate/${requestId}`,
       {
         type: request.value.type,
         title: request.value.title,

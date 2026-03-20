@@ -27,7 +27,7 @@ const submitForgetPassword = async () => {
   }
 
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/send-identifiants', {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/send-identifiants`, {
       user_login_email: inputEmail.value, // Nom de champ attendu par Laravel
     })
 

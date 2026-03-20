@@ -68,7 +68,7 @@ const addOffer = async () => {
   try {
     // ATTENTION: Quand on envoie un FormData, on n'ajoute PAS le 'Content-Type': 'multipart/form-data'
     // Axios et le navigateur le gèrent automatiquement, et l'ajouter manuellement cause souvent des erreurs.
-    const response = await axios.post('http://127.0.0.1:8000/api/addOffer', formData, {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/addOffer`, formData, {
       headers: {
         Authorization: `Bearer ${token}`, // 'Content-Type' est retiré ou commenté car FormData le gère
         // 'Content-Type': 'application/json', // NON, c'est pour du JSON simple

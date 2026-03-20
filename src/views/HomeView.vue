@@ -35,7 +35,7 @@ const fetchFavorites = async () => {
 
   try {
     // CORRECTION 401: Ajout de l'en-tête Authorization directement à la requête
-    const responses = await axios.get('http://127.0.0.1:8000/api/favorites', {
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/favorites`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -68,7 +68,7 @@ const toggleFavorite = async (offerId) => {
   // Construit l'URL selon l'action (ajouter/retirer)
   const action = isCurrentlyFavorite ? 'remove' : 'add'
   const method = isCurrentlyFavorite ? 'delete' : 'post'
-  const url = `http://127.0.0.1:8000/api/favorites/${action}/${offerId}`
+  const url = `${import.meta.env.VITE_API_URL}/api/favorites/${action}/${offerId}`
 
   try {
     await axios({
@@ -97,7 +97,7 @@ const toggleFavorite = async (offerId) => {
 // Logique pour compter (inchangée)
 const count = async () => {
   try {
-    const responses = await axios.get('http://127.0.0.1:8000/api/count')
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/count`)
     nbUser.value = responses.data.User
     nbOffer.value = responses.data.Offer
     nbCompany.value = responses.data.Company
@@ -110,7 +110,7 @@ onMounted(count)
 // Logique pour lire les offres (inchangée)
 const readOffer = async () => {
   try {
-    const responses = await axios.get('http://127.0.0.1:8000/api/allOffer')
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/allOffer`)
     offers.value = responses.data.data
   } catch (err) {
     console.log(err)
@@ -176,7 +176,7 @@ onMounted(() => {
     <div class="offers-grid">
       <div class="offer-card" v-for="offer in offers.slice(0, 3)" :key="offer.id">
         <div class="card-image">
-          <img :src="'http://127.0.0.1:8000' + offer.image_url" alt="Image offre" />
+          <img :src="`${import.meta.env.VITE_API_URL}` + offer.image_url" alt="Image offre" />
           <div class="image-overlay">
             <span class="badge badge-employment">{{
               offer.employment_type?.name || 'Type de Contrat'

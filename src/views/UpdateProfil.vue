@@ -37,7 +37,7 @@ const loadProfil = async () => {
   const token = localStorage.getItem('auth_token')
 
   try {
-    const response = await axios.get(`http://127.0.0.1:8000/api/userById/${profilId}`, {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/userById/${profilId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -62,11 +62,11 @@ const loadProfil = async () => {
 
     // si une photo existe, on prépare l'aperçu
     if (data.photo) {
-      photoPreview.value = `http://127.0.0.1:8000/storage/${data.photo}`
+      photoPreview.value = `${import.meta.env.VITE_API_URL}/storage/${data.photo}`
     }
     // si un cv existe, on prépare l'aperçu
     if (data.cv_pdf) {
-      CvPreview.value = `http://127.0.0.1:8000/storage/${data.cv_pdf}`
+      CvPreview.value = `${import.meta.env.VITE_API_URL}/storage/${data.cv_pdf}`
     }
   } catch (error) {
     console.error('Erreur lors du chargement du Profil :', error)
@@ -127,7 +127,7 @@ const updateProfil = async () => {
   }
 
   try {
-    await axios.post(`http://127.0.0.1:8000/api/userUpdate/${profilId}`, formData, {
+    await axios.post(`${import.meta.env.VITE_API_URL}/api/userUpdate/${profilId}`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'multipart/form-data',

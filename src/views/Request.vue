@@ -14,7 +14,7 @@ const token = localStorage.getItem('auth_token')
 const readRequest = async () => {
   // temps de chargement front plus rapide, avec la donnée qui arrive
   try {
-    const responses = await axios.get('http://127.0.0.1:8000/api/allRequest', {
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/allRequest`, {
       headers: { Authorization: `Bearer ${token}` },
     })
 
@@ -33,7 +33,7 @@ const isAdmin = computed(() => userStore.user?.role === 'admin')
 // Logique pour compter (inchangée)
 const count = async () => {
   try {
-    const responses = await axios.get('http://127.0.0.1:8000/api/count')
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/count`)
     nbRequest.value = responses.data.Request
   } catch (err) {
     console.log(err)
@@ -54,7 +54,10 @@ onMounted(count)
       <div class="request-card" v-for="request in requests" :key="request.id">
         <div class="card-header">
           <div class="user-avatar">
-            <img :src="'http://127.0.0.1:8000/storage/' + request.photo" alt="Photo Utilisateur" />
+            <img
+              :src="`${import.meta.env.VITE_API_URL}/storage/` + request.photo"
+              alt="Photo Utilisateur"
+            />
           </div>
           <div class="user-info">
             <h3 class="user-name">{{ request.nom }} {{ request.prenom }}</h3>

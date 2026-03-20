@@ -138,7 +138,7 @@ const submitForm = async () => {
     // Envoi de la requête POST à l'API pour créer la société
     const companyResponse = await axios.post(
       // 'await' met la fonction en pause jusqu'à ce que la réponse arrive
-      'http://127.0.0.1:8000/api/addCompany', // URL de l'API Laravel de mon back
+      `${import.meta.env.VITE_API_URL}/api/addCompany`, // URL de l'API Laravel de mon back
       companyFormData, // Les données à envoyer (incluant le fichier logo si présent)
     )
     console.log('Société ajoutée (Réponse API) :', companyResponse.data) // Log la réponse du serveur
@@ -190,7 +190,10 @@ const submitForm = async () => {
     }
 
     // Envoi de la requête POST à l'API pour créer l'utilisateur administrateur
-    const userResponse = await axios.post('http://127.0.0.1:8000/api/addUser', userFormData)
+    const userResponse = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/addUser`,
+      userFormData,
+    )
 
     console.log('Utilisateur ajouté (Réponse API) :', userResponse.data) // Log la réponse du serveur
 
@@ -211,7 +214,7 @@ const submitForm = async () => {
 
     // Envoi de la requête POST à l'API pour déclencher l'envoi de l'e-mail
     const emailResponse = await axios.post(
-      'http://127.0.0.1:8000/api/send-identifiants-company',
+      `${import.meta.env.VITE_API_URL}/api/send-identifiants-company`,
       emailPayload,
     )
     console.log('E-mails envoyés (Réponse API) :', emailResponse.data.message) // Log le message de succès de l'envoi

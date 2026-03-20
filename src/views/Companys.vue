@@ -6,7 +6,7 @@ const companys = ref([])
 
 const readCompany = async () => {
   try {
-    const responses = await axios.get('http://127.0.0.1:8000/api/allCompany')
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/allCompany`)
     companys.value = responses.data.data
   } catch (err) {
     console.log(err)
@@ -29,7 +29,7 @@ onMounted(readCompany)
         <div class="logo-container">
           <a :href="`/Companys/CompanyDetails/${company.id}`">
             <img
-              :src="'http://127.0.0.1:8000/storage/' + company.logo"
+              :src="`${import.meta.env.VITE_API_URL}/storage/` + company.logo"
               :alt="`Logo ${company.name}`"
             />
           </a>

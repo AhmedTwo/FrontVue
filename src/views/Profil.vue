@@ -19,7 +19,7 @@ const readProfil = async () => {
 
   try {
     // on apl l'endpoint spécifique par ID (selon votre API Laravel)
-    const responses = await axios.get(`http://127.0.0.1:8000/api/userById/${userId}`, {
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/userById/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -42,7 +42,7 @@ onMounted(readProfil)
       <p class="user-qualification">{{ user.qualification }}</p>
       <img
         class="profil-photo"
-        :src="'http://127.0.0.1:8000/storage/' + user.photo"
+        :src="`${import.meta.env.VITE_API_URL}/storage/` + user.photo"
         alt="Photo de profil"
       />
       <a href="/Profil/UpdateProfil" class="btn-edit-float" title="Modifier le profil">
@@ -121,7 +121,7 @@ onMounted(readProfil)
             </svg>
             <span>CV :</span>
             <a
-              :href="'http://127.0.0.1:8000/storage/' + user.cv_pdf"
+              :href="`${import.meta.env.VITE_API_URL}/storage/` + user.cv_pdf"
               target="_blank"
               class="cv-link"
               >Télécharger</a

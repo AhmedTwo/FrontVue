@@ -17,7 +17,7 @@ const submitForm = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/contact', form.value)
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/contact`, form.value)
 
     submissionStatus.value = 'success'
     errorMessage.value = response.data.message // Récupère le message de succès de Laravel

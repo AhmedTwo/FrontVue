@@ -30,11 +30,14 @@ const loadRequestData = async () => {
     isLoading.value = true
 
     // Requête vers ton API Laravel avec le token dans les headers
-    const responses = await axios.get(`http://127.0.0.1:8000/api/requestsByUser/${userId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const responses = await axios.get(
+      `${import.meta.env.VITE_API_URL}/api/requestsByUser/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
 
     // Stocker les données. (Le backend renvoie maintenant le tableau de demandes)
     requests.value = responses.data.data // variable du tableau vide ci-dessus
@@ -50,7 +53,7 @@ const deleteRequest = async (requestId) => {
   // on remplace l'alert() par une confirmation modale si possible, ici on simule.
   if (confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/deleteRequest/${requestId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/deleteRequest/${requestId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -110,7 +113,10 @@ onMounted(loadRequestData)
     <div class="request-card" v-for="request in requests" :key="request.id">
       <div class="card-header">
         <div class="user-avatar">
-          <img :src="'http://127.0.0.1:8000/storage/' + request.photo" alt="Photo Utilisateur" />
+          <img
+            :src="`${import.meta.env.VITE_API_URL}/storage/` + request.photo"
+            alt="Photo Utilisateur"
+          />
         </div>
         <div class="user-info">
           <!-- Nom et Prénom sont séparés dans API -->

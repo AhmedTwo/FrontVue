@@ -20,7 +20,9 @@ const readCompany = async () => {
 
   try {
     // on apl l'endpoint spécifique par ID (selon votre API Laravel)
-    const responses = await axios.get(`http://127.0.0.1:8000/api/companyById/${companyId}`)
+    const responses = await axios.get(
+      `${import.meta.env.VITE_API_URL}/api/companyById/${companyId}`,
+    )
 
     // on stock l'objet unique dans la variable 'company'
     companys.value = responses.data.data
@@ -43,7 +45,7 @@ onMounted(readCompany)
     <div class="company-details-grid" v-if="companys">
       <div class="header-card">
         <img
-          :src="'http://127.0.0.1:8000/storage/' + companys.logo"
+          :src="`${import.meta.env.VITE_API_URL}/storage/` + companys.logo"
           :alt="`Logo ${companys.name}`"
         />
         <div class="company-title-block">

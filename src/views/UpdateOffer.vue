@@ -32,7 +32,7 @@ const loadOffer = async () => {
   const token = localStorage.getItem('auth_token')
 
   try {
-    const response = await axios.get(`http://127.0.0.1:8000/api/offerById/${offerId}`, {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/offerById/${offerId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -66,7 +66,7 @@ const updateOffer = async () => {
 
   try {
     await axios.post(
-      `http://127.0.0.1:8000/api/offerUpdate/${offerId}`,
+      `${import.meta.env.VITE_API_URL}/api/offerUpdate/${offerId}`,
       {
         title: offer.value.title,
         category: offer.value.category,

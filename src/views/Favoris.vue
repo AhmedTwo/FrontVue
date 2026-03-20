@@ -39,7 +39,7 @@ const fetchFavoriteOffers = async () => {
   try {
     // la rqt pour récupérer les favoris de l'utilisateur
     // on envoie une requête GET à l'API pour obtenir la liste des favoris
-    const responses = await axios.get('http://127.0.0.1:8000/api/favorites', {
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/favorites`, {
       headers: {
         // Ajoute le token dans l'en-tête 'Authorization' au format Bearer pour l'authentification
         // sinon sa bloquera selon le middleware dans api.php
@@ -64,7 +64,7 @@ const removeFavorite = async (offerId) => {
   const token = localStorage.getItem('auth_token')
   if (!token) return // Construit l'URL complète pour la requête de suppression, incluant l'ID de l'offre.
 
-  const url = `http://127.0.0.1:8000/api/favorites/remove/${offerId}`
+  const url = `${import.meta.env.VITE_API_URL}/api/favorites/remove/${offerId}`
   try {
     // Envoie une requête HTTP DELETE à l'API pour retirer l'offre.
     await axios.delete(url, {
@@ -117,7 +117,7 @@ onMounted(() => {
 
     <div class="offer-card" v-for="offer in favoriteOffers" :key="offer.id">
       <div class="card-image">
-        <img :src="'http://127.0.0.1:8000' + offer.image_url" alt="Image offre" />
+        <img :src="`${import.meta.env.VITE_API_URL}` + offer.image_url" alt="Image offre" />
         <div class="image-overlay">
           <span class="badge badge-employment">{{ offer.employment_type.name }}</span>
           <span class="badge badge-category">{{ offer.category }}</span

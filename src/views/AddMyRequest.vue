@@ -31,7 +31,7 @@ const addRequest = async () => {
   }
 
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/addRequest', payload, {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/addRequest`, payload, {
       // Le Payload est le corps de données que j'envoie (par exemple, le JSON de l'offre) au serveur pour qu'il puisse créer la ressource
       headers: {
         Authorization: `Bearer ${token}`,

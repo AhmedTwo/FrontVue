@@ -70,7 +70,7 @@ const filteredOffers = computed(() => {
 const readOffer = async () => {
   try {
     // Envoie une requête GET vers le endpoint qui liste toutes les offres.
-    const responses = await axios.get('http://127.0.0.1:8000/api/allOffer')
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/allOffer`)
     // Met à jour la variable réactive 'offers' avec le tableau de données.
     offers.value = responses.data.data
   } catch (err) {
@@ -99,7 +99,7 @@ const fetchFavorites = async () => {
 
   try {
     // Envoie une requête GET vers le endpoint des favoris.
-    const responses = await axios.get('http://127.0.0.1:8000/api/favorites', {
+    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/favorites`, {
       headers: {
         // Ajoute l'en-tête d'autorisation Bearer Token pour les routes protégées.
         Authorization: `Bearer ${token}`,
@@ -132,7 +132,7 @@ const toggleFavorite = async (offerId) => {
   const action = isCurrentlyFavorite ? 'remove' : 'add'
   const method = isCurrentlyFavorite ? 'delete' : 'post'
   // Construit l'URL complète dynamiquement.
-  const url = `http://127.0.0.1:8000/api/favorites/${action}/${offerId}`
+  const url = `${import.meta.env.VITE_API_URL}/api/favorites/${action}/${offerId}`
 
   try {
     // Exécute la requête HTTP (POST pour ajouter, DELETE pour retirer).
@@ -228,7 +228,7 @@ onMounted(() => {
     </div>
     <div class="offer-card" v-for="offer in filteredOffers" :key="offer.id">
       <div class="card-image">
-        <img :src="'http://127.0.0.1:8000' + offer.image_url" alt="Image offre" />
+        <img :src="`${import.meta.env.VITE_API_URL}` + offer.image_url" alt="Image offre" />
         <div class="image-overlay">
           <span class="badge badge-employment">{{ offer.employment_type.name }}</span>
           <span class="badge badge-category">{{ offer.category }}</span

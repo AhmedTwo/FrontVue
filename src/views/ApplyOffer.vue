@@ -32,7 +32,7 @@ const applyToOffer = async () => {
   formData.append('motivation_text', motivation.value)
 
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/apply-offer', formData, {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/apply-offer`, formData, {
       headers: {
         Authorization: `Bearer ${authToken.value}`,
         'Content-Type': 'multipart/form-data',
