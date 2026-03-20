@@ -225,7 +225,9 @@ const submitForm = async () => {
     success.value = true
 
     // Petite astuce : on affiche les infos à l'écran pour que tu puisses les noter
-    alert(`Société créée !\nIdentifiant : ${autoEmail}\nMot de passe : ${autoPassword}`)
+    alert(
+      `Société créée !\nIdentifiant : ${autoEmail}\nMot de passe : ${autoPassword} \nJe vous invite à l'enregistrer !`,
+    )
 
     setTimeout(() => {
       console.log('Redirection vers SignIn...')
