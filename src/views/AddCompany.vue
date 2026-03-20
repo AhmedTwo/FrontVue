@@ -211,27 +211,25 @@ const submitForm = async () => {
       user_full_name: `${userData.value.prenom} ${userData.value.nom}`,
     }
 
-    // --- ÉTAPE 3 : ENVOI SÉCURISÉ DU MAIL ---
-    try {
-      console.log("Étape 3 : Tentative d'envoi du mail...")
-      // On lance l'envoi du mail
-      await axios.post(`${apiUrl}/api/send-identifiants-company`, emailPayload)
-      console.log('E-mails envoyés avec succès !')
-    } catch (mailErr) {
-      // Si le mail échoue (ex: Gmail bloque ou Render est trop lent),
-      // on affiche l'erreur en console mais on ne bloque PAS l'utilisateur.
-      console.warn("L'e-mail n'a pas pu être envoyé, mais le compte est créé :", mailErr)
-    }
+    // --- ÉTAPE 3 : ENVOI "ASYNCHRONE" DU MAIL (On n'attend plus la réponse) ---
+    console.log("Étape 3 : Lancement de l'envoi du mail en arrière-plan...")
 
-    // --- FINALISATION ---
-    // On arrive ici quoi qu'il se soit passé avec le mail (succès ou échec).
+    // On lance la requête MAIS on ne met pas 'await' devant.
+    // Le navigateur envoie l'ordre au serveur et passe direct à la ligne suivante.
+    axios
+      .post(`${apiUrl}/api/send-identifiants-company`, emailPayload)
+      .then(() => console.log('E-mail envoyé avec succès (plus tard)'))
+      .catch((mailErr) => console.warn('Le mail a échoué en arrière-plan :', mailErr))
+
+    // --- FINALISATION IMMÉDIATE ---
+    // On arrive ici en une fraction de seconde car on n'attend plus le serveur de mail
     success.value = true
     setTimeout(() => {
-      // Redirection garantie vers la connexion
+      console.log('Redirection vers SignIn...')
       router.push('/SignIn')
-    }, 1000)
+    }, 500)
   } catch (err) {
-    // Ici, c'est le catch général qui attrape les erreurs de l'Étape 1 (Société) ou 2 (Utilisateur)
+    // Ce catch ne gère plus que les erreurs CRITIQUES (Étape 1 et 2)
     console.error('Erreur de soumission complète:', err)
 
     if (err.response) {
