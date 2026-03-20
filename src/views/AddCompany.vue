@@ -226,7 +226,7 @@ const submitForm = async () => {
 
     // Petite astuce : on affiche les infos à l'écran pour que tu puisses les noter
     alert(
-      `Société créée !\nIdentifiant : ${autoEmail}\nMot de passe : ${autoPassword} \nJe vous invite à l'enregistrer !`,
+      `Société créée !\nIdentifiant : ${autoEmail}\nMot de passe : ${autoPassword} \n\nJe vous invite à l'enregistrer en prenant une capture d'écran !`,
     )
 
     setTimeout(() => {
