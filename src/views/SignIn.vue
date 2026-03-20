@@ -73,7 +73,10 @@ const loginUser = async () => {
           />
         </div>
         <div class="divLogin">
-          <label for="inputMdp">Mot de passe :</label>
+          <label for="inputMdp"
+            >Mot de passe : (pour les sociétés, le mdp est d'office
+            <strong>password</strong>)</label
+          >
           <input
             v-model="login.password"
             type="password"

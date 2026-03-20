@@ -169,7 +169,7 @@ const submitForm = async () => {
 
     const slugName = companyData.value.name.toLowerCase().replace(/\s/g, '-')
     autoEmail = `${slugName}@company.com` // Forme l'email de connexion généré (ex: 'ma-societe@company.com')
-    autoPassword = generateRandomPassword(8) // Génère un mot de passe aléatoire de 8 caractères via la fonction ci-dessus
+    autoPassword = 'password' // Mot de passe fixe pour toutes les societes
 
     // Crée un nouvel objet FormData pour les données utilisateur
     const userFormData = new FormData()
@@ -211,19 +211,22 @@ const submitForm = async () => {
       user_full_name: `${userData.value.prenom} ${userData.value.nom}`,
     }
 
-    // --- ÉTAPE 3 : ENVOI "ASYNCHRONE" DU MAIL (On n'attend plus la réponse) ---
-    console.log("Étape 3 : Lancement de l'envoi du mail en arrière-plan...")
+    // // --- ÉTAPE 3 : ENVOI "ASYNCHRONE" DU MAIL (On n'attend plus la réponse) ---
+    // console.log("Étape 3 : Lancement de l'envoi du mail en arrière-plan...")
 
-    // On lance la requête MAIS on ne met pas 'await' devant.
-    // Le navigateur envoie l'ordre au serveur et passe direct à la ligne suivante.
-    axios
-      .post(`${apiUrl}/api/send-identifiants-company`, emailPayload)
-      .then(() => console.log('E-mail envoyé avec succès (plus tard)'))
-      .catch((mailErr) => console.warn('Le mail a échoué en arrière-plan :', mailErr))
+    // // On lance la requête MAIS on ne met pas 'await' devant.
+    // // Le navigateur envoie l'ordre au serveur et passe direct à la ligne suivante.
+    // axios
+    //   .post(`${apiUrl}/api/send-identifiants-company`, emailPayload)
+    //   .then(() => console.log('E-mail envoyé avec succès (plus tard)'))
+    //   .catch((mailErr) => console.warn('Le mail a échoué en arrière-plan :', mailErr))
 
     // --- FINALISATION IMMÉDIATE ---
-    // On arrive ici en une fraction de seconde car on n'attend plus le serveur de mail
     success.value = true
+
+    // Petite astuce : on affiche les infos à l'écran pour que tu puisses les noter
+    alert(`Société créée !\nIdentifiant : ${autoEmail}\nMot de passe : password`)
+
     setTimeout(() => {
       console.log('Redirection vers SignIn...')
       router.push('/SignIn')
