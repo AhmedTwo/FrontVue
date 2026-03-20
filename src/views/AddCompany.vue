@@ -169,7 +169,7 @@ const submitForm = async () => {
 
     const slugName = companyData.value.name.toLowerCase().replace(/\s/g, '-')
     autoEmail = `${slugName}@company.com` // Forme l'email de connexion généré (ex: 'ma-societe@company.com')
-    autoPassword = 'password' // Mot de passe fixe pour toutes les societes
+    autoPassword = generateRandomPassword(8)
 
     // Crée un nouvel objet FormData pour les données utilisateur
     const userFormData = new FormData()
@@ -225,7 +225,7 @@ const submitForm = async () => {
     success.value = true
 
     // Petite astuce : on affiche les infos à l'écran pour que tu puisses les noter
-    alert(`Société créée !\nIdentifiant : ${autoEmail}\nMot de passe : password`)
+    alert(`Société créée !\nIdentifiant : ${autoEmail}\nMot de passe : ${autoPassword}`)
 
     setTimeout(() => {
       console.log('Redirection vers SignIn...')
