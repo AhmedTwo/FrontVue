@@ -75,7 +75,7 @@ const loginUser = async () => {
         <div class="divLogin">
           <label for="inputMdp"
             >Mot de passe : (pour les sociétés, le mdp est d'office
-            <p color="red">"password"</p>
+            <span color="red">"password"</span>
             )</label
           >
           <input
