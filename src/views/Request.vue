@@ -3,37 +3,38 @@ import { onMounted, ref, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
 import axios from 'axios'
 
-// --- CONFIGURATION API ---
-const apiUrl = import.meta.env.VITE_API_URL
-
 // ref est une syntaxe qui permet de dynamiser une variable pour l'afficher dans le html
 const requests = ref([])
 const userStore = useUserStore()
 const nbRequest = ref([])
 
-// on recup le token d'authentification depuis le localStorage
+const apiUrl = import.meta.env.VITE_API_URL
+
+//  on recup le token d'authentification depuis le localStorage
 const token = localStorage.getItem('auth_token')
 
 const readRequest = async () => {
+  // temps de chargement front plus rapide, avec la donnée qui arrive
   try {
-    // Utilisation de apiUrl ici
     const responses = await axios.get(`${apiUrl}/api/allRequest`, {
       headers: { Authorization: `Bearer ${token}` },
     })
 
     requests.value = responses.data.data
+    // console.log(requests.value)
   } catch (err) {
     console.log(err)
   }
 }
 
+onMounted(readRequest)
+
 // Vérifier si l'utilisateur est admin
 const isAdmin = computed(() => userStore.user?.role === 'admin')
 
-// Logique pour compter
+// Logique pour compter (inchangée)
 const count = async () => {
   try {
-    // Utilisation de apiUrl ici
     const responses = await axios.get(`${apiUrl}/api/count`)
     nbRequest.value = responses.data.Request
   } catch (err) {
@@ -41,10 +42,7 @@ const count = async () => {
   }
 }
 
-onMounted(() => {
-  readRequest()
-  count()
-})
+onMounted(count)
 </script>
 
 <template>

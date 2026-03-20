@@ -5,14 +5,13 @@ import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
-// --- CONFIGURATION API ---
-const apiUrl = import.meta.env.VITE_API_URL
-
 const router = useRouter()
 
 const loading = ref(false)
 const error = ref(null)
 const success = ref(false)
+
+const apiUrl = import.meta.env.VITE_API_URL
 
 const userData = ref({
   nom: '',
@@ -30,21 +29,29 @@ const userData = ref({
 })
 
 const handlePhotoUpload = (event) => {
+  // On vérifie d'abord si des fichiers ont été sélectionnés ('event.target.files' existe).
+  // Si oui, on prend le premier fichier de la liste : [0].
+  // Si non (par exemple, si l'utilisateur annule), on assigne 'null'.
   const file = event.target.files ? event.target.files[0] : null
+  // On assigne le fichier récupéré à la propriété 'photo'
   userData.value.photo = file
+  // console.log("Fichier stocké :", userData.value.photo)
 }
 
 const handleCVUpload = (event) => {
   const file = event.target.files ? event.target.files[0] : null
+  // On assigne le fichier récupéré à la propriété 'photo'
   userData.value.cv_pdf = file
 }
 
-// fonction d'ajout (POST)
+//  fonction d'ajout (POST)
 const addUser = async () => {
   loading.value = true
   error.value = null
 
+  // CRÉATION DE FORMDATA pour envoyer du texte ET le fichier
   const formData = new FormData()
+
   formData.append('nom', userData.value.nom)
   formData.append('prenom', userData.value.prenom)
   formData.append('email', userData.value.email)
@@ -53,29 +60,37 @@ const addUser = async () => {
   formData.append('ville', userData.value.ville)
   formData.append('code_postal', userData.value.code_postal)
   formData.append('qualification', userData.value.qualification)
+
+  // Les préférences sont jointes en chaîne de caractères
   formData.append('preference', userData.value.preference.join(', '))
+
   formData.append('disponibilite', userData.value.disponibilite)
 
+  // Ajout du fichier photo s'il existe
   if (userData.value.photo) {
+    // Le nom 'photo' doit correspondre à ce que votre API backend attend
     formData.append('photo', userData.value.photo)
   }
 
+  // Ajout du fichier cv s'il existe
   if (userData.value.cv_pdf) {
+    // Le nom 'cv_pdf' doit correspondre à ce que votre API backend attend
     formData.append('cv_pdf', userData.value.cv_pdf)
   }
 
   try {
-    // CORRECTION : Utilisation de apiUrl ici
-    const response = await axios.post(`${apiUrl}/api/addUser`, formData)
+    const response = await axios.post(`${apiUrl}/api/addUser`, formData, {})
 
     success.value = true
     console.log('Utilisateur ajouté:', response.data)
 
+    // redirection après succès
     setTimeout(() => {
       router.push('/SignIn')
     }, 1000)
   } catch (err) {
     console.error("Erreur lors de l'ajout de l'utilisateur :", err.response?.data || err)
+    // erreur retournée par le serveur si elle existe
     error.value = err.response?.data?.message || "Échec de l'ajout. Vérifiez les champs."
   } finally {
     loading.value = false
@@ -134,6 +149,7 @@ const addUser = async () => {
 
         <div class="divAdd">
           <label for="preference">Préférences (Choix multiples) :</label>
+
           <div class="checkbox-group">
             <label> <input type="checkbox" value="CDI" v-model="userData.preference" /> CDI </label>
             <label> <input type="checkbox" value="CDD" v-model="userData.preference" /> CDD </label>
@@ -172,7 +188,9 @@ const addUser = async () => {
         </div>
 
         <div v-if="error" class="divAdd message error-message">❌ {{ error }}</div>
-        <div v-if="success" class="divAdd message success-message">✅ Utilisateur ajouté !</div>
+        <div v-if="success" class="divAdd message success-message">
+          ✅ Utilisateur ajouté avec succès !
+        </div>
 
         <button type="submit" class="btn" :disabled="loading">
           <span v-if="loading">Ajout en cours...</span>

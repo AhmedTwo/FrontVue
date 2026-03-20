@@ -1,48 +1,73 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue' // Ajout de 'computed'
 import ImagesLogo from '../assets/images/imagePortal.png'
 import axios from 'axios'
 import { useUserStore } from '@/stores/user'
 
-// --- CONFIGURATION API ---
-const apiUrl = import.meta.env.VITE_API_URL
-
+// ref est une syntaxe qui permet de dynamiser une variable pour l'afficher
 const nbUser = ref([])
 const nbOffer = ref([])
 const nbCompany = ref([])
 const offers = ref([])
 
+// Utilisation du store pour l'authentification
 const userStore = useUserStore()
+
+const apiUrl = import.meta.env.VITE_API_URL
+
+// NOUVEAU: Stocke les IDs des offres favorites de l'utilisateur connecté
 const favoritesIds = ref(new Set())
 
+// CORRECTION: Définir isCompany en utilisant 'computed'
 const isCompany = computed(() => userStore.user?.role === 'company')
 
+// NOUVEAU: Fonction pour récupérer les IDs des favoris de l'utilisateur
 const fetchFavorites = async () => {
-  if (!userStore.isAuthenticated || isCompany.value) return
+  // Ne pas charger les favoris si l'utilisateur n'est pas candidat ou n'est pas authentifié
+  if (!userStore.isAuthenticated || isCompany.value) {
+    // Utilisation correcte de .value
+    return
+  }
 
   const token = localStorage.getItem('auth_token')
-  if (!token) return
+  if (!token) {
+    console.warn("Jeton d'authentification manquant pour charger les favoris.")
+    return
+  }
 
   try {
+    // CORRECTION 401: Ajout de l'en-tête Authorization directement à la requête
     const responses = await axios.get(`${apiUrl}/api/favorites`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
+
+    // On mappe pour obtenir uniquement les IDs
     const ids = responses.data.data.map((offer) => offer.id)
+    // On stocke dans un Set pour une recherche rapide (O(1))
     favoritesIds.value = new Set(ids)
   } catch (err) {
     console.error('Erreur lors de la récupération des favoris:', err)
+    // Laissez l'erreur 401 se produire si le token n'est pas bon, mais la requête est maintenant formatée correctement.
   }
 }
 
+// NOUVEAU: Propriété calculée pour savoir si une offre est favorite
 const isFavorite = (offerId) => favoritesIds.value.has(offerId)
 
+// NOUVEAU: Fonction pour ajouter/retirer des favoris
 const toggleFavorite = async (offerId) => {
-  if (!userStore.isAuthenticated || isCompany.value) return
+  // CORRECTION: Utilisation correcte de isCompany.value
+  if (!userStore.isAuthenticated || isCompany.value) {
+    return // Ne rien faire si non authentifié ou si c'est une compagnie
+  }
 
   const token = localStorage.getItem('auth_token')
   if (!token) return
 
   const isCurrentlyFavorite = isFavorite(offerId)
+  // Construit l'URL selon l'action (ajouter/retirer)
   const action = isCurrentlyFavorite ? 'remove' : 'add'
   const method = isCurrentlyFavorite ? 'delete' : 'post'
   const url = `${apiUrl}/api/favorites/${action}/${offerId}`
@@ -51,20 +76,27 @@ const toggleFavorite = async (offerId) => {
     await axios({
       method: method,
       url: url,
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        // Ajout de l'en-tête pour les requêtes POST/DELETE aussi
+        Authorization: `Bearer ${token}`,
+      },
     })
 
+    // Mettre à jour l'état local immédiatement
     if (isCurrentlyFavorite) {
       favoritesIds.value.delete(offerId)
     } else {
       favoritesIds.value.add(offerId)
     }
+    // Utiliser une nouvelle instance de Set pour que Vue réagisse à la modification
     favoritesIds.value = new Set(favoritesIds.value)
   } catch (err) {
     console.error('Erreur lors de la mise à jour des favoris:', err)
+    alert('Erreur lors de la mise à jour des favoris. Veuillez réessayer.')
   }
 }
 
+// Logique pour compter (inchangée)
 const count = async () => {
   try {
     const responses = await axios.get(`${apiUrl}/api/count`)
@@ -75,7 +107,9 @@ const count = async () => {
     console.log(err)
   }
 }
+onMounted(count)
 
+// Logique pour lire les offres (inchangée)
 const readOffer = async () => {
   try {
     const responses = await axios.get(`${apiUrl}/api/allOffer`)
@@ -84,12 +118,13 @@ const readOffer = async () => {
     console.log(err)
   }
 }
+onMounted(readOffer)
 
+// Logique d'authentification
 onMounted(() => {
-  count()
-  readOffer()
   if (localStorage.getItem('auth_token') !== null) {
-    userStore.isAuthenticated = true
+    userStore.isAuthenticated = true // Utilisez userStore
+    // NOUVEAU: Charger les favoris après l'authentification
     fetchFavorites()
   }
 })
@@ -100,6 +135,7 @@ onMounted(() => {
   <main class="hero">
     <div class="hero-content">
       <h1>Votre avenir professionnel commence ici !</h1>
+      <h1></h1>
       <p>
         Explorez les opportunités dans les secteurs en forte croissance : Tech, IA, Transition
         écologique, Santé... Profitez des options en télétravail, des postes hybrides, et des CDI à
@@ -169,26 +205,80 @@ onMounted(() => {
               </svg>
               <span>{{ offer.location }}</span>
             </div>
+
+            <div class="detail-row">
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              <span>{{ offer.participants_count }} postulants</span>
+            </div>
+
+            <div class="detail-row">
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+              <span>{{ offer.created_at }}</span>
+            </div>
           </div>
 
           <div class="mission-section" v-if="offer.mission">
             <strong>Mission :</strong>
             <p>{{ offer.mission }}</p>
           </div>
+
+          <div class="benefits-section" v-if="offer.benefits">
+            <strong>Avantages :</strong>
+            <p>{{ offer.benefits }}</p>
+          </div>
         </div>
 
         <div class="card-footer" v-if="userStore.isAuthenticated && !isCompany">
-          <a :href="`/offers/apply/${offer.id}`" class="btn-apply">Postuler à l'offre</a>
+          <a :href="`/offers/apply/${offer.id}`" class="btn-apply">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293z"
+              />
+            </svg>
+            Postuler à l'offre
+          </a>
+
           <button
             @click="toggleFavorite(offer.id)"
             class="btn-heart"
             :class="{ 'is-favorite': isFavorite(offer.id) }"
+            style="margin: 2%"
+            aria-label="Ajouter aux favoris"
           >
-            <span style="font-size: 35px">{{ isFavorite(offer.id) ? '♥' : '♡' }}</span>
+            <span style="font-size: 35px">
+              {{ isFavorite(offer.id) ? '♥' : '♡' }}
+            </span>
           </button>
         </div>
         <div class="card-footer" v-else-if="isCompany">
-          <span class="btn-apply">Les entreprises ne peuvent pas postuler.</span>
+          <span class="btn-apply"
+            >Les entreprises ne peuvent pas postuler ou ajouter aux favoris.</span
+          >
         </div>
         <div class="card-footer" v-else>
           <a href="/SignIn" class="btn-apply">Connectez-vous pour postuler</a>

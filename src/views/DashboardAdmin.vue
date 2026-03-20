@@ -3,11 +3,12 @@ import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import { RouterLink } from 'vue-router'
 
-// --- CONFIGURATION API ---
+const token = localStorage.getItem('auth_token')
+const currentTab = ref('offers') // Onglet par défaut
+
 const apiUrl = import.meta.env.VITE_API_URL
 
-const token = localStorage.getItem('auth_token')
-const currentTab = ref('offers')
+// console.log(token)
 
 const offers = ref([])
 const companys = ref([])
@@ -16,6 +17,7 @@ const requests = ref([])
 
 const fetchData = async () => {
   try {
+    // Remplace le bloc Promise.all par celui-ci :
     const [resOffers, resCompanys, resRequests, resUsers] = await Promise.all([
       axios.get(`${apiUrl}/api/allOffer`),
       axios.get(`${apiUrl}/api/allCompany`),
@@ -35,15 +37,23 @@ const fetchData = async () => {
 
 onMounted(fetchData)
 
+// Fonction de suppression (appel de l'API DELETE)
 const deleteUser = async (userId) => {
+  // on remplace l'alert() par une confirmation modale si possible, ici on simule.
   if (confirm('Êtes-vous sûr de vouloir supprimer cette utilisateur ?')) {
     try {
       await axios.delete(`${apiUrl}/api/deleteUser/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
+
+      // Retirer l'utilisateur du tableau local sans recharger toute la page
       users.value = users.value.filter((use) => use.id !== userId)
+      console.log(`Utilisateur ID ${userId} supprimée.`)
     } catch (err) {
-      console.error('Erreur lors de la suppression:', err)
+      console.error("Erreur lors de la suppression de l'utilisateur:", err)
+      prompt('Erreur lors de la suppression. Veuillez réessayer.')
     }
   }
 }
@@ -52,11 +62,16 @@ const deleteOffer = async (offerId) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette offre ?')) {
     try {
       await axios.delete(`${apiUrl}/api/deleteOffer/${offerId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
+
       offers.value = offers.value.filter((off) => off.id !== offerId)
+      console.log(`Offre ID ${offerId} supprimée.`)
     } catch (err) {
-      console.error('Erreur lors de la suppression:', err)
+      console.error("Erreur lors de la suppression de l'offre:", err)
+      prompt('Erreur lors de la suppression. Veuillez réessayer.')
     }
   }
 }
@@ -65,11 +80,16 @@ const deleteCompany = async (companyId) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette société ?')) {
     try {
       await axios.delete(`${apiUrl}/api/deleteCompany/${companyId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
+
       companys.value = companys.value.filter((com) => com.id !== companyId)
+      console.log(`Société ID ${companyId} supprimée.`)
     } catch (err) {
-      console.error('Erreur lors de la suppression:', err)
+      console.error('Erreur lors de la suppression de la société:', err)
+      prompt('Erreur lors de la suppression. Veuillez réessayer.')
     }
   }
 }
@@ -78,30 +98,50 @@ const deleteRequest = async (requestId) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) {
     try {
       await axios.delete(`${apiUrl}/api/deleteRequest/${requestId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
+
       requests.value = requests.value.filter((req) => req.id !== requestId)
+      console.log(`Demande ID ${requestId} supprimée.`)
     } catch (err) {
-      console.error('Erreur lors de la suppression:', err)
+      console.error('Erreur lors de la suppression de la demande:', err)
+      prompt('Erreur lors de la suppression. Veuillez réessayer.')
     }
   }
 }
 
+// Fonction de changement de status
 const toggleRequest = async (requestId) => {
-  if (!token) return
+  if (!token) {
+    console.error("Jeton d'authentification manquant.")
+    return
+  }
   try {
     const response = await axios.patch(
       `${apiUrl}/api/toggleRequestStatus/${requestId}`,
       {},
-      { headers: { Authorization: `Bearer ${token}` } },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
     )
+
+    // Mise à jour de l'état local (très important pour le rendu)
     const newStatus = response.data.new_status
+
+    // Trouver la demande dans le tableau réactif 'requests' et mettre à jour son statut
     const index = requests.value.findIndex((req) => req.id === requestId)
     if (index !== -1) {
       requests.value[index].status = newStatus
     }
+
+    console.log(`Statut de la demande ID ${requestId} mis à jour à : ${newStatus}`)
   } catch (err) {
     console.error('Erreur lors de la bascule du statut:', err)
+    alert('Erreur lors de la mise à jour du statut. Veuillez réessayer.')
   }
 }
 </script>
@@ -165,9 +205,16 @@ const toggleRequest = async (requestId) => {
             <RouterLink
               :to="{ name: 'Modif Offre Company', params: { id: offer.id } }"
               class="btn btn-edit"
-              >Modifier</RouterLink
             >
-            <button class="btn btn-delete" @click="deleteOffer(offer.id)">Supprimer</button>
+              Modifier
+            </RouterLink>
+            <button
+              class="btn btn-delete"
+              title="Supprimer cette offre"
+              @click="deleteOffer(offer.id)"
+            >
+              Supprimer
+            </button>
           </div>
         </div>
       </div>
@@ -188,7 +235,13 @@ const toggleRequest = async (requestId) => {
             </div>
           </div>
           <div class="card-actions">
-            <button class="btn btn-delete" @click="deleteCompany(company.id)">Supprimer</button>
+            <button
+              class="btn btn-delete"
+              title="Supprimer cette utilisateur"
+              @click="deleteCompany(company.id)"
+            >
+              Supprimer
+            </button>
           </div>
         </div>
       </div>
@@ -200,7 +253,7 @@ const toggleRequest = async (requestId) => {
         <div v-for="user in users" :key="user.id" class="card">
           <div class="card-content">
             <div class="card-image">
-              <img :src="apiUrl + '/storage/' + user.photo" class="user-avatar" :alt="user.nom" />
+              <img :src="apiUrl + '/storage/' + user.photo" class="user-avatar" />
             </div>
             <div class="card-details">
               <span class="title">{{ user.prenom }} {{ user.nom }}</span>
@@ -209,7 +262,13 @@ const toggleRequest = async (requestId) => {
             </div>
           </div>
           <div class="card-actions">
-            <button class="btn btn-delete" @click="deleteUser(user.id)">Supprimer</button>
+            <button
+              class="btn btn-delete"
+              title="Supprimer cette utilisateur"
+              @click="deleteUser(user.id)"
+            >
+              Supprimer
+            </button>
           </div>
         </div>
       </div>
@@ -219,14 +278,31 @@ const toggleRequest = async (requestId) => {
       <h2 class="section-title">Demandes</h2>
       <div class="dashboard-container">
         <div v-for="request in requests" :key="request.id" class="card">
-          <div class="card-details">
-            <span class="meta"><strong>Titre : </strong>{{ request.title }}</span>
-            <span class="badge">{{ request.type }}</span>
-            <span class="meta"><strong>Description : </strong>{{ request.description }}</span>
-            <span class="meta"><strong>Statut : </strong>{{ request.status }}</span>
+          <div class="card-content">
+            <div class="card-details">
+              <span class="meta"
+                ><span style="color: black; font-weight: 600; font-size: 20px">Titre : </span
+                >{{ request.title }}</span
+              >
+              <span class="badge">{{ request.type }}</span>
+              <span class="meta"
+                ><span style="color: black; font-weight: 600; font-size: 20px">Description : </span
+                >{{ request.description }}</span
+              >
+              <span class="meta"
+                ><span style="color: black; font-weight: 600; font-size: 20px">Statut : </span
+                >{{ request.status }}</span
+              >
+            </div>
           </div>
           <div class="card-actions">
-            <button class="btn btn-delete" @click="deleteRequest(request.id)">Supprimer</button>
+            <button
+              class="btn btn-delete"
+              title="Supprimer cette utilisateur"
+              @click="deleteRequest(request.id)"
+            >
+              Supprimer
+            </button>
             <button type="button" class="btn-toggle" @click="toggleRequest(request.id)">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

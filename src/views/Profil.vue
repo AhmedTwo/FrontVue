@@ -3,25 +3,24 @@ import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import { useUserStore } from '@/stores/user'
 
-// --- CONFIGURATION API ---
-const apiUrl = import.meta.env.VITE_API_URL
-
 const userStore = useUserStore()
 const token = localStorage.getItem('auth_token')
+
+const apiUrl = import.meta.env.VITE_API_URL
 
 // on change le nom de la variable pour stocker un seul objet
 const user = ref(null)
 
 const readProfil = async () => {
-  const userId = userStore.user?.id
+  const userId = userStore.user.id
 
   if (!userId) {
-    console.error('ID de user non trouvé.')
+    console.error('ID de user non trouvé dans les paramètres de la route.')
     return
   }
 
   try {
-    // Utilisation de apiUrl ici
+    // on apl l'endpoint spécifique par ID (selon votre API Laravel)
     const responses = await axios.get(`${apiUrl}/api/userById/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -32,7 +31,7 @@ const readProfil = async () => {
     user.value = responses.data.data
     console.log(user.value)
   } catch (err) {
-    console.log('Erreur lors de la récupération des détails de user :', err)
+    console.log('Erreur lors de la récupération des détails de user par ID :', err)
   }
 }
 
@@ -66,7 +65,9 @@ onMounted(readProfil)
               />
             </svg>
             <span>Email :</span>
-            <a :href="'mailto:' + user.email" class="info-value email-link">{{ user.email }}</a>
+            <a href="mailto:seghiriahmed9@gmail.com" class="info-value email-link">{{
+              user.email
+            }}</a>
           </p>
 
           <p class="info-item">

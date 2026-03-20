@@ -3,16 +3,15 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 
-// --- CONFIGURATION API ---
-const apiUrl = import.meta.env.VITE_API_URL
-
 const route = useRoute()
 const router = useRouter()
+
+const apiUrl = import.meta.env.VITE_API_URL
 
 const requestId = route.params.id
 const isLoading = ref(true)
 
-// liste officielle des types de demandes
+// liste officielle des types de demandes (basée sur ton ENUM)
 const types = ['RECLAMATION', 'DEMANDES', 'SUPPRESSION', 'MODIFICATION']
 
 const request = ref({
@@ -25,18 +24,21 @@ const loadRequest = async () => {
   const token = localStorage.getItem('auth_token')
 
   try {
-    // Utilisation de apiUrl ici
     const response = await axios.get(`${apiUrl}/api/requestById/${requestId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
 
+    // Détecte automatiquement si les données sont dans "data" ou pas
     const data = response.data.data ? response.data.data : response.data
 
     request.value.type = data.type
     request.value.title = data.title
     request.value.description = data.description
+
+    console.log(data)
+    console.log(request)
   } catch (error) {
     console.error('Erreur lors du chargement de la demande :', error)
     alert('Impossible de charger la demande à modifier.')
@@ -50,7 +52,6 @@ const updateRequest = async () => {
   const token = localStorage.getItem('auth_token')
 
   try {
-    // Utilisation de apiUrl ici
     await axios.post(
       `${apiUrl}/api/requestUpdate/${requestId}`,
       {

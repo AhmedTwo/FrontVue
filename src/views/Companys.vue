@@ -2,14 +2,12 @@
 import { onMounted, ref } from 'vue'
 import axios from 'axios'
 
-// --- CONFIGURATION API ---
 const apiUrl = import.meta.env.VITE_API_URL
 
 const companys = ref([])
 
 const readCompany = async () => {
   try {
-    // Utilisation de apiUrl ici
     const responses = await axios.get(`${apiUrl}/api/allCompany`)
     companys.value = responses.data.data
   } catch (err) {
@@ -28,6 +26,7 @@ onMounted(readCompany)
 
   <div class="company-grid">
     <div class="company-card" v-for="company in companys" :key="company.id">
+      <!-- En-tête avec logo -->
       <div class="card-header">
         <div class="logo-container">
           <a :href="`/Companys/CompanyDetails/${company.id}`">
@@ -36,6 +35,7 @@ onMounted(readCompany)
         </div>
       </div>
 
+      <!-- Corps de carte -->
       <div class="card-body">
         <h3 class="company-name">{{ company.name }}</h3>
 
@@ -70,6 +70,7 @@ onMounted(readCompany)
         </div>
       </div>
 
+      <!-- Pied de carte -->
       <div class="card-footer">
         <a :href="`/Companys/CompanyDetails/${company.id}`" class="btn-details">
           <svg

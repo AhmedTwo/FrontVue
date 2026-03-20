@@ -4,10 +4,9 @@ import axios from 'axios'
 // on importe useRoute de vue-router pour accéder aux paramètres de l'URL
 import { useRoute } from 'vue-router'
 
-// --- CONFIGURATION API ---
-const apiUrl = import.meta.env.VITE_API_URL
-
 const route = useRoute()
+
+const apiUrl = import.meta.env.VITE_API_URL
 
 // on change le nom de la variable pour stocker un seul objet
 const companys = ref(null)
@@ -22,7 +21,7 @@ const readCompany = async () => {
   }
 
   try {
-    // Utilisation de apiUrl ici
+    // on apl l'endpoint spécifique par ID (selon votre API Laravel)
     const responses = await axios.get(`${apiUrl}/api/companyById/${companyId}`)
 
     // on stock l'objet unique dans la variable 'company'

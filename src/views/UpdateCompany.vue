@@ -4,13 +4,13 @@ import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
-// --- CONFIGURATION API ---
-const apiUrl = import.meta.env.VITE_API_URL
-
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
+const apiUrl = import.meta.env.VITE_API_URL
+
+// 💡 FIX 1: Définir l'état 'message' pour éviter le TypeError et gérer l'UX
 const message = ref({
   text: null,
   type: '',
@@ -18,7 +18,10 @@ const message = ref({
 
 const companyId = userStore.user.company_id
 const isLoading = ref(true)
+
 const token = localStorage.getItem('auth_token')
+
+// NOUVEAU: Référence pour le fichier logo sélectionné
 const newLogoFile = ref(null)
 
 const company = ref({
@@ -32,12 +35,15 @@ const company = ref({
   n_siret: '',
 })
 
+// FONCTION pour gérer la sélection du fichier
 const handleLogoChange = (event) => {
   const file = event.target.files[0]
   newLogoFile.value = file
 }
 
 const loadCompany = async () => {
+  const token = localStorage.getItem('auth_token')
+
   try {
     const response = await axios.get(`${apiUrl}/api/companyById/${companyId}`, {
       headers: {
@@ -45,6 +51,7 @@ const loadCompany = async () => {
       },
     })
 
+    // Détecte automatiquement si les données sont dans "data" ou pas
     const data = response.data.data ? response.data.data : response.data
 
     company.value.name = data.name
@@ -55,9 +62,12 @@ const loadCompany = async () => {
     company.value.description = data.description
     company.value.email_company = data.email_company
     company.value.n_siret = data.n_siret
+
+    console.log(data)
   } catch (error) {
     console.error('Erreur lors du chargement de la société :', error)
-    message.value.text = 'Impossible de charger la société.'
+    // Remplacement d'alert
+    message.value.text = 'Impossible de charger la société à modifier.'
     message.value.type = 'error'
   } finally {
     isLoading.value = false
@@ -66,7 +76,7 @@ const loadCompany = async () => {
 
 const updateCompany = async () => {
   const formData = new FormData()
-  message.value.text = null
+  message.value.text = null // Réinitialiser le message à null
 
   formData.append('name', company.value.name)
   formData.append('number_of_employees', company.value.number_of_employees ?? '')
@@ -75,15 +85,25 @@ const updateCompany = async () => {
   formData.append('description', company.value.description)
   formData.append('email_company', company.value.email_company)
   formData.append('n_siret', company.value.n_siret ? String(company.value.n_siret) : '')
-
+  // Ajout fichier ou chemin existant (si non modifié)
   if (newLogoFile.value) {
+    // Ajout nouveau fichier
     formData.append('logo', newLogoFile.value)
   }
+  // Si newLogoFile est null, cela signifie que l'utilisateur n'a pas sélectionné de nouveau fichier.
+  // Dans ce cas, nous n'envoyons PAS le champ 'logo' dans FormData,
+  // ce qui permet à Laravel de le gérer avec la règle 'sometimes'.
+
+  // ce que j'envoie
+  // for (let [key, value] of formData.entries()) {
+  //   console.log(`${key}:`, value)
+  // }
 
   try {
     await axios.post(`${apiUrl}/api/companyUpdate/${companyId}`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
+        // Axios gère Content-Type: multipart/form-data automatiquement avec FormData
       },
     })
 
@@ -95,8 +115,23 @@ const updateCompany = async () => {
     }, 1500)
   } catch (error) {
     console.error('Erreur lors de la mise à jour :', error)
-    message.value.text = '❌ Erreur lors de la mise à jour.'
-    message.value.type = 'error'
+
+    // FIX 3: Afficher les erreurs de validation du serveur 422 pour le debug
+    if (error.response && error.response.status === 422 && error.response.data.errors) {
+      const validationErrors = error.response.data.errors
+      // Extrait le message de la première erreur
+      const firstErrorKey = Object.keys(validationErrors)[0]
+      const firstErrorMessage = validationErrors[firstErrorKey][0]
+
+      message.value.text = `❌ Erreur de validation : ${firstErrorMessage}`
+      message.value.type = 'error'
+
+      // Pour le debug avancé, affichez toutes les erreurs dans la console
+      console.error('Détails des erreurs 422:', validationErrors)
+    } else {
+      message.value.text = '❌ Erreur inattendue lors de la mise à jour de la société.'
+      message.value.type = 'error'
+    }
   }
 }
 
@@ -115,23 +150,46 @@ onMounted(loadCompany)
 <template>
   <main class="update-container">
     <div class="update-header">
-      <h1 class="update-title">MODIFIER LA SOCIÉTÉ</h1>
+      <h1 class="update-title">
+        <!-- Remplacement de l'icône FontAwesome par une SVG pour être auto-contenu -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon-pencil"
+        >
+          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+        </svg>
+        MODIFIER LA SOCIÉTÉ
+      </h1>
+      <p class="update-description">Mettez à jour les informations de la société ci-dessous.</p>
     </div>
 
-    <div v-if="isLoading" class="loading-state">Chargement...</div>
+    <!-- Message de chargement ou d'erreur/succès -->
+    <div v-if="isLoading" class="loading-state">Chargement des informations actuelles...</div>
 
+    <!-- AFFICHAGE DU MESSAGE D'ÉTAT -->
     <div v-if="message.text" :class="['alert', message.type]">
       {{ message.text }}
     </div>
 
     <form class="update-form" @submit.prevent="updateCompany" v-if="!isLoading">
+      <!-- Nom -->
       <div class="form-group">
         <label for="inputNom" class="form-label">Nom</label>
         <input type="text" id="inputNom" v-model="company.name" class="form-input" required />
       </div>
 
+      <!-- Nombre d'employés -->
       <div class="form-group">
         <label for="inputNbEmploye" class="form-label">Nombre d’employés</label>
+        <!-- On utilise input au lieu de textarea pour les nombres -->
         <input
           type="number"
           id="inputNbEmploye"
@@ -141,6 +199,7 @@ onMounted(loadCompany)
         />
       </div>
 
+      <!-- Domaine -->
       <div class="form-group">
         <label for="inputDomaine" class="form-label">Domaine</label>
         <input
@@ -152,6 +211,7 @@ onMounted(loadCompany)
         />
       </div>
 
+      <!-- Adresse -->
       <div class="form-group">
         <label for="inputAdresse" class="form-label">Adresse</label>
         <input
@@ -163,6 +223,7 @@ onMounted(loadCompany)
         />
       </div>
 
+      <!-- Description -->
       <div class="form-group">
         <label for="inputDescription" class="form-label">Description</label>
         <textarea
@@ -174,6 +235,7 @@ onMounted(loadCompany)
         ></textarea>
       </div>
 
+      <!-- Email -->
       <div class="form-group">
         <label for="inputEmail" class="form-label">Email de contact</label>
         <input
@@ -185,11 +247,13 @@ onMounted(loadCompany)
         />
       </div>
 
+      <!-- Numéro SIRET -->
       <div class="form-group">
         <label for="inputSiret" class="form-label">Numéro SIRET</label>
         <input type="text" v-model="company.n_siret" @blur="validateSiret" class="form-input" />
       </div>
 
+      <!-- Logo -->
       <div class="form-group">
         <label for="inputLogo" class="form-label">Logo</label>
 
@@ -197,12 +261,13 @@ onMounted(loadCompany)
           <p>Logo actuel :</p>
           <img
             :src="apiUrl + '/storage/' + company.logo"
-            alt="Logo actuel"
+            alt="Logo actuel de l'entreprise"
             class="company-logo-preview"
           />
         </div>
 
         <input type="file" id="inputLogo" @change="handleLogoChange" class="form-input" />
+        <p class="form-hint">Sélectionnez un nouveau fichier pour remplacer l'ancien.</p>
       </div>
 
       <div class="form-actions">

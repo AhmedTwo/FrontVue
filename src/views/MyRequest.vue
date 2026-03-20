@@ -4,20 +4,25 @@ import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
-// --- CONFIGURATION API ---
+const userStore = useUserStore()
+const route = useRoute() // Ajout de useRouter pour la redirection après suppression
+
 const apiUrl = import.meta.env.VITE_API_URL
 
-const userStore = useUserStore()
-const route = useRoute()
-
-const requests = ref([])
+// La variable qui contiendra le TABLEAU des demandes de l'utilisateur
+const requests = ref([]) // Initialise à un tableau vide
 const isLoading = ref(true)
+
+//  on recup le token d'authentification depuis le localStorage
 const token = localStorage.getItem('auth_token')
 
+// Fonction de chargement des demandes de l'utilisateur connecté
 const loadRequestData = async () => {
-  const userId = userStore.user?.id
+  // Récupère l'ID de l'utilisateur depuis l'URL (passé par le header)
+  const userId = userStore.user.id // C'est l'ID de l'utilisateur, pas de la demande !
 
   if (!userId || userId === 'null') {
+    // Vérifier aussi si la valeur est 'null' en chaîne
     console.error('ID Utilisateur non trouvé ou non valide.')
     isLoading.value = false
     return
@@ -25,32 +30,40 @@ const loadRequestData = async () => {
 
   try {
     isLoading.value = true
-    // Utilisation de apiUrl ici
+
+    // Requête vers ton API Laravel avec le token dans les headers
     const responses = await axios.get(`${apiUrl}/api/requestsByUser/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
-    requests.value = responses.data.data
+
+    // Stocker les données. (Le backend renvoie maintenant le tableau de demandes)
+    requests.value = responses.data.data // variable du tableau vide ci-dessus
   } catch (err) {
-    console.error(`Erreur lors du chargement des demandes:`, err)
+    console.error(`Erreur lors du chargement des demandes pour l'utilisateur ID ${userId}:`, err) // alert('Impossible de charger les demandes.')
   } finally {
     isLoading.value = false
   }
 }
 
+// Fonction de suppression (appel de l'API DELETE)
 const deleteRequest = async (requestId) => {
+  // on remplace l'alert() par une confirmation modale si possible, ici on simule.
   if (confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) {
     try {
-      // Utilisation de apiUrl ici
       await axios.delete(`${apiUrl}/api/deleteRequest/${requestId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
+
+      // Retirer la demande du tableau local sans recharger toute la page
       requests.value = requests.value.filter((req) => req.id !== requestId)
+      console.log(`Demande ID ${requestId} supprimée.`)
     } catch (err) {
-      console.error('Erreur lors de la suppression:', err)
+      console.error('Erreur lors de la suppression de la demande:', err)
+      prompt('Erreur lors de la suppression. Veuillez réessayer.')
     }
   }
 }
@@ -99,9 +112,10 @@ onMounted(loadRequestData)
     <div class="request-card" v-for="request in requests" :key="request.id">
       <div class="card-header">
         <div class="user-avatar">
-          <img :src="apiUrl + '/storage/' + request.photo" alt="Photo Utilisateur" />
+          <img :src="apiUrl + '/storage/' + request.photo" />
         </div>
         <div class="user-info">
+          <!-- Nom et Prénom sont séparés dans API -->
           <h3 class="user-name">{{ request.prenom }} {{ request.nom }}</h3>
           <span class="badge badge-type">{{ request.type }}</span>
         </div>
@@ -142,9 +156,23 @@ onMounted(loadRequestData)
 
       <div class="card-footer">
         <button type="button" class="btn-update" title="Modifier cette demande">
-          <a
-            :href="`/myRequest/UpdateMyRequest/${request.id}`"
-            style="text-decoration: none; color: inherit"
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            class="bi bi-pencil-square"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
+            />
+            <path
+              fill-rule="evenodd"
+              d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
+            />
+          </svg>
+          <a :href="`/myRequest/UpdateMyRequest/${request.id}`" style="text-decoration: none"
             >Modifier</a
           >
         </button>
@@ -155,6 +183,17 @@ onMounted(loadRequestData)
           title="Supprimer cette demande"
           @click="deleteRequest(request.id)"
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"
+            />
+          </svg>
           Supprimer
         </button>
       </div>

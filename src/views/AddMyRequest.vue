@@ -3,14 +3,13 @@ import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
-// --- CONFIGURATION API ---
-const apiUrl = import.meta.env.VITE_API_URL
-
 const router = useRouter()
 
-const loading = ref(false)
-const error = ref(null)
-const success = ref(false)
+const apiUrl = import.meta.env.VITE_API_URL
+
+const loading = ref(false) // Indique que le processus (l'envoi de la demande) a commencé
+const error = ref(null) // Réinitialise l'état d'erreur
+const success = ref(false) // Réinitialise l'état de succès
 
 const requestData = ref({
   title: '',
@@ -18,7 +17,7 @@ const requestData = ref({
   description: '',
 })
 
-// fonction d'ajout (POST)
+//  fonction d'ajout (POST)
 const addRequest = async () => {
   const token = localStorage.getItem('auth_token')
   if (!token) {
@@ -26,9 +25,7 @@ const addRequest = async () => {
     return
   }
 
-  loading.value = true // On active le chargement ici
-  error.value = null
-
+  // Assurez-vous que les clés ci-dessous correspondent aux attentes de votre API
   const payload = {
     title: requestData.value.title,
     type: requestData.value.type,
@@ -36,8 +33,8 @@ const addRequest = async () => {
   }
 
   try {
-    // Utilisation de apiUrl ici
-    const response = await axios.post(`${apiUrl}/api/addRequest`, payload, {
+    const response = await axios.post('http://127.0.0.1:8000/api/addRequest', payload, {
+      // Le Payload est le corps de données que j'envoie (par exemple, le JSON de l'offre) au serveur pour qu'il puisse créer la ressource
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -46,12 +43,10 @@ const addRequest = async () => {
 
     success.value = true
     console.log('Demande ajoutée:', response.data)
-
-    setTimeout(() => {
-      router.back()
-    }, 1000)
+    router.back()
   } catch (err) {
     console.error("Erreur lors de l'ajout de la demande :", err.response?.data || err)
+    //  erreur retournée par le serveur si elle existe
     error.value = err.response?.data?.message || "Échec de l'ajout. Vérifiez les champs."
   } finally {
     loading.value = false
@@ -61,6 +56,7 @@ const addRequest = async () => {
 
 <template>
   <div class="add-request-container">
+    <!-- En-tête -->
     <div class="header-section">
       <h1>AJOUT D'UNE DEMANDE</h1>
       <p class="subtitle">Créez une nouvelle demande en remplissant les champs ci-dessous</p>
@@ -115,6 +111,7 @@ const addRequest = async () => {
     </form>
   </div>
 </template>
+
 <style scoped>
 .add-request-container {
   max-width: 800px;

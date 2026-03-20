@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import axios from 'axios'
 
-// --- CONFIGURATION API ---
 const apiUrl = import.meta.env.VITE_API_URL
 
 const form = ref({
@@ -20,11 +19,10 @@ const submitForm = async () => {
   errorMessage.value = ''
 
   try {
-    // Utilisation de apiUrl ici
     const response = await axios.post(`${apiUrl}/api/contact`, form.value)
 
     submissionStatus.value = 'success'
-    errorMessage.value = response.data.message
+    errorMessage.value = response.data.message // Récupère le message de succès de Laravel
 
     // Réinitialiser le formulaire après succès
     form.value.name = ''
@@ -35,8 +33,11 @@ const submitForm = async () => {
     submissionStatus.value = 'error'
 
     if (error.response && error.response.data.errors) {
+      // Erreurs de validation de Laravel
       errorMessage.value = 'Veuillez corriger les champs invalides.'
+      // Vous pourriez itérer sur error.response.data.errors pour afficher les messages spécifiques sous les champs
     } else if (error.response && error.response.data.error) {
+      // Erreur PHPMailer retournée par le contrôleur (code 500)
       errorMessage.value = error.response.data.error
     } else {
       errorMessage.value = 'Erreur réseau ou serveur inattendue.'
@@ -67,6 +68,7 @@ const submitForm = async () => {
                   viewBox="0 0 16 16"
                 >
                   <path
+                    fill-rule="evenodd"
                     d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19.646.646.547-2.19A.677.677 0 0 1 8.208 4.7l.142.142c-.012.384-.043.79-.113 1.185-.163.92-.377 1.98-.778 2.978A15.39 15.39 0 0 1 4.545 14H.455c-.21 0-.39-.144-.455-.35L.379 13.1c.075-.245.289-.544.595-.913l3.6-4.72a.678.678 0 0 0-.214-.216L.884 9.535a.677.677 0 0 1-.363-.63l-.545-2.18c-.065-.206.115-.411.325-.411h11.23a.678.678 0 0 1 .59.35l.645 1.942.296-.296.646-.646c.52-.13.79-.68.647-1.298l-.41-1.643a1.745 1.745 0 0 1 .163-2.61l2.308-2.308a1.745 1.745 0 0 1 2.61-.163l1.76 1.32c.52.39.75.92.68 1.48l-.337 1.347a.677.677 0 0 1-.223.364l-3.32 3.32a.678.678 0 0 0-.158.552l.214 1.495.214 1.495a.678.678 0 0 1-.35.592l-1.942.645A15.42 15.42 0 0 1 4.545 14H.455c-.21 0-.39-.144-.455-.35L.379 13.1c.075-.245.289-.544.595-.913l3.6-4.72a.678.678 0 0 0-.214-.216L.884 9.535a.677.677 0 0 1-.363-.63l-.545-2.18c-.065-.206.115-.411.325-.411h11.23a.678.678 0 0 1 .59.35l.645 1.942.296-.296.646-.646c.52-.13.79-.68.647-1.298l-.41-1.643a1.745 1.745 0 0 1 .163-2.61l2.308-2.308a1.745 1.745 0 0 1 2.61-.163l1.76 1.32c.52.39.75.92.68 1.48l-.337 1.347a.677.677 0 0 1-.223.364l-3.32 3.32a.678.678 0 0 0-.158.552l.214 1.495.214 1.495a.678.678 0 0 1-.35.592l-1.942.645z"
                   />
                 </svg>
@@ -121,13 +123,13 @@ const submitForm = async () => {
             <h2 class="section-title compact-section-title">Un message pour Portal_Job ?</h2>
 
             <div v-if="submissionStatus === 'sending'" class="alert alert-info">
-              Envoi du message...
+              Envoi du message en cours...
             </div>
             <div v-else-if="submissionStatus === 'success'" class="alert alert-success">
-              ✅ {{ errorMessage }}
+              ✅ **Succès :** {{ errorMessage }}
             </div>
             <div v-else-if="submissionStatus === 'error'" class="alert alert-danger">
-              ❌ {{ errorMessage }}
+              ❌ **Erreur :** {{ errorMessage }}
             </div>
 
             <form @submit.prevent="submitForm" class="contact-form compact-form">

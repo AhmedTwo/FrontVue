@@ -3,13 +3,13 @@ import ImagesPortal from '../assets/images/Portal.png'
 
 import { ref } from 'vue' // Nécessaire pour les variables réactives
 import axios from 'axios' // Nécessaire pour les requêtes API
+// Importation de la fonction de navigation pour changer de page après soumission
 import { useRouter } from 'vue-router'
-
-// --- CONFIGURATION API ---
-const apiUrl = import.meta.env.VITE_API_URL
 
 // on initialise routeur Vue pour la redirection
 const router = useRouter()
+
+const apiUrl = import.meta.env.VITE_API_URL
 
 const inputEmail = ref('') // pour lier l'input
 const errorMessage = ref('') // pour le message d'erreur
@@ -29,7 +29,6 @@ const submitForgetPassword = async () => {
   }
 
   try {
-    // CORRECTION : Utilisation de apiUrl
     const response = await axios.post(`${apiUrl}/api/send-identifiants`, {
       user_login_email: inputEmail.value, // Nom de champ attendu par Laravel
     })
@@ -39,9 +38,10 @@ const submitForgetPassword = async () => {
     }
 
     setTimeout(() => {
+      // Démarre un délai
       // Redirection après succès (vers la page de connexion)
       router.push('/SignIn')
-    }, 2000)
+    }, 2000) // 1 seconde de délai
   } catch (error) {
     console.error('Erreur de soumission:', error)
     if (error.response && error.response.status === 422) {
