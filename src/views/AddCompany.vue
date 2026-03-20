@@ -204,31 +204,35 @@ const submitForm = async () => {
     console.log("Étape 3 : Déclenchement de l'envoi des identifiants par e-mail...")
 
     const emailPayload = {
-      company_name: companyData.value.name, // Nom de la société pour le corps de l'e-mail
-      company_email: companyData.value.email_company, // **Adresse du destinataire**
-      user_login_email: autoEmail, // identifiant email généré (pour le contenu de l'e-mail)
-      user_raw_password: autoPassword, // identifiant Mot de passe généré (pour le contenu de l'e-mail)
-      user_full_name: `${userData.value.prenom} ${userData.value.nom}`, // Nom complet
+      company_name: companyData.value.name,
+      company_email: companyData.value.email_company,
+      user_login_email: autoEmail,
+      user_raw_password: autoPassword,
+      user_full_name: `${userData.value.prenom} ${userData.value.nom}`,
     }
 
-    // Envoi de la requête POST à l'API pour déclencher l'envoi de l'e-mail
-    const emailResponse = await axios.post(
-      `${apiUrl}/api/send-identifiants-company`,
-      emailPayload,
-    )
-    console.log('E-mails envoyés (Réponse API) :', emailResponse.data.message) // Log le message de succès de l'envoi
+    // --- ÉTAPE 3 : ENVOI SÉCURISÉ DU MAIL ---
+    try {
+      console.log("Étape 3 : Tentative d'envoi du mail...")
+      // On lance l'envoi du mail
+      await axios.post(`${apiUrl}/api/send-identifiants-company`, emailPayload)
+      console.log('E-mails envoyés avec succès !')
+    } catch (mailErr) {
+      // Si le mail échoue (ex: Gmail bloque ou Render est trop lent),
+      // on affiche l'erreur en console mais on ne bloque PAS l'utilisateur.
+      console.warn("L'e-mail n'a pas pu être envoyé, mais le compte est créé :", mailErr)
+    }
 
-    // Finalisation du processus après les 3 étapes réussies
-    success.value = true // Active l'indicateur de succès
+    // --- FINALISATION ---
+    // On arrive ici quoi qu'il se soit passé avec le mail (succès ou échec).
+    success.value = true
     setTimeout(() => {
-      // Démarre un délai
-      // Redirection après succès (vers la page de connexion)
+      // Redirection garantie vers la connexion
       router.push('/SignIn')
-    }, 1000) // 1 seconde de délai
+    }, 1000)
   } catch (err) {
-    // Bloc exécuté si une erreur (réseau ou API) se produit dans le 'try'
-    // GESTION DES ERREURS
-    console.error('Erreur de soumission complète:', err) // Log l'erreur complète pour le développeur
+    // Ici, c'est le catch général qui attrape les erreurs de l'Étape 1 (Société) ou 2 (Utilisateur)
+    console.error('Erreur de soumission complète:', err)
 
     if (err.response) {
       // Vérifie si l'erreur provient d'une réponse HTTP du serveur (4xx ou 5xx)
