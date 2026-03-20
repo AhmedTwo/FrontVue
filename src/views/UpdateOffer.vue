@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
+
 const route = useRoute()
 const router = useRouter()
 
@@ -32,13 +35,13 @@ const loadOffer = async () => {
   const token = localStorage.getItem('auth_token')
 
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/offerById/${offerId}`, {
+    // Utilisation de apiUrl ici
+    const response = await axios.get(`${apiUrl}/api/offerById/${offerId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
 
-    // Détecte automatiquement si les données sont dans "data" ou pas
     const data = response.data.data ? response.data.data : response.data
 
     offer.value.title = data.title
@@ -49,9 +52,6 @@ const loadOffer = async () => {
     offer.value.description = data.description
     offer.value.technologies_used = data.technologies_used
     offer.value.benefits = data.benefits
-
-    console.log(data)
-    console.log(offer)
   } catch (error) {
     console.error("Erreur lors du chargement de l'offre :", error)
     alert("Impossible de charger l'offre à modifier.")
@@ -60,13 +60,14 @@ const loadOffer = async () => {
   }
 }
 
-// Màj de l'offre'
+// Màj de l'offre
 const updateOffer = async () => {
   const token = localStorage.getItem('auth_token')
 
   try {
+    // Utilisation de apiUrl ici
     await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/offerUpdate/${offerId}`,
+      `${apiUrl}/api/offerUpdate/${offerId}`,
       {
         title: offer.value.title,
         category: offer.value.category,
@@ -98,15 +99,13 @@ onMounted(loadOffer)
 <template>
   <div class="update-container">
     <div class="update-entete">
-      <h1 class="update-title"><i class="fa-solid fa-pen-to-square"></i> MODIFIER L'OFFRE !</h1>
+      <h1 class="update-title">MODIFIER L'OFFRE !</h1>
       <p class="update-description">Mettez à jour les informations de l'offre ci-dessous</p>
     </div>
 
     <div v-if="isLoading" style="text-align: center; padding: 40px">Chargement...</div>
 
     <form v-else class="update-form" @submit.prevent="updateOffer">
-      <input type="hidden" name="id" value="1" />
-
       <div class="form-group">
         <label for="inputTitre" class="form-label">Titre</label>
         <input type="text" v-model="offer.title" id="inputTitre" class="form-input" />

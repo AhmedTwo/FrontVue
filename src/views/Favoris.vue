@@ -1,99 +1,64 @@
 <script setup>
-// Importe les fonctions réactives 'onMounted' (pour les actions au chargement) et 'ref' (pour les variables dynamiques) de Vue.js.
 import { onMounted, ref } from 'vue'
-// Importe le store Pinia (gestionnaire d'état) qui contient l'état de l'utilisateur (authentification, rôle).
 import { useUserStore } from '@/stores/user'
-// Importe la bibliothèque Axios, utilisée pour effectuer les requêtes HTTP (GET, DELETE, etc.) vers l'API Backend.
 import axios from 'axios'
 
-// Initialise et utilise le store utilisateur pour accéder à ses données et à son état.
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
+
 const userStore = useUserStore()
-
-// Vérifier si l'utilisateur est une company (nécessaire pour la vérification)
-// Vérifie le rôle de l'utilisateur stocké dans le store. Si le rôle est 'company',
-// il n'a pas accès aux favoris (seuls les candidats en ont).
 const isCompany = userStore.user?.role === 'company'
-
-// ref pour stocker uniquement les offres favorites
-// Déclare une variable réactive 'favoriteOffers', Vue.js surveillera cette variable
-// pour mettre à jour l'interface utilisateur dès qu'elle changera. Elle est initialisée comme un tableau vide
 const favoriteOffers = ref([])
 
 // Fonction pour récupérer les offres favorites
 const fetchFavoriteOffers = async () => {
-  // on charge pas si l'utilisateur n'est pas candidat/admin ou n'est pas authentifié
-  // Si l'utilisateur n'est pas connecté OU si son rôle est 'company', la fonction s'arrête immédiatement avec le return.
-  if (!userStore.isAuthenticated || isCompany) {
-    return
-  }
+  if (!userStore.isAuthenticated || isCompany) return
 
-  // on recup le jeton d'authentification (token) stocké localement, nécessaire pour prouver l'identité à l'API.
   const token = localStorage.getItem('auth_token')
-
   if (!token) {
-    // Affiche un avertissement si le token est manquant et arrête l'exécution
     console.warn("Jeton d'authentification manquant pour charger les favoris.")
     return
   }
 
   try {
-    // la rqt pour récupérer les favoris de l'utilisateur
-    // on envoie une requête GET à l'API pour obtenir la liste des favoris
-    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/favorites`, {
+    // Utilisation de apiUrl ici
+    const responses = await axios.get(`${apiUrl}/api/favorites`, {
       headers: {
-        // Ajoute le token dans l'en-tête 'Authorization' au format Bearer pour l'authentification
-        // sinon sa bloquera selon le middleware dans api.php
         Authorization: `Bearer ${token}`,
       },
     })
-    // on met à jour la variable 'favoriteOffers' avec les données reçues de l'API
-    // ca met à jour l'affichage automatiquement
     favoriteOffers.value = responses.data.data
   } catch (err) {
-    // le cle recupere et affiche toute erreur survenue pendant la requête
     console.error('Erreur lors de la récupération des offres favorites:', err)
   }
 }
 
-// Fonction pour retirer une offre des favoris (utilisée uniquement sur cette page)
-// Prend l'ID de l'offre à retirer en argument.
+// Fonction pour retirer une offre des favoris
 const removeFavorite = async (offerId) => {
-  // Vérification de l'authentification et du rôle avant toute action.
   if (!userStore.isAuthenticated || isCompany) return
 
   const token = localStorage.getItem('auth_token')
-  if (!token) return // Construit l'URL complète pour la requête de suppression, incluant l'ID de l'offre.
+  if (!token) return
 
-  const url = `${import.meta.env.VITE_API_URL}/api/favorites/remove/${offerId}`
+  // Utilisation de apiUrl ici
+  const url = `${apiUrl}/api/favorites/remove/${offerId}`
   try {
-    // Envoie une requête HTTP DELETE à l'API pour retirer l'offre.
     await axios.delete(url, {
       headers: {
-        // Inclut à nouveau le token pour l'autorisation.
         Authorization: `Bearer ${token}`,
       },
     })
-    console.log(`Offre ${offerId} retirée des favoris.`) // Retirer l'offre de la liste locale pour mettre à jour l'affichage immédiatement
-    // Filtre le tableau 'favoriteOffers' pour enlever l'offre dont l'ID correspond à 'offerId'.
-    // C'est une mise à jour optimiste du Frontend.
-
     favoriteOffers.value = favoriteOffers.value.filter((offer) => offer.id !== offerId)
   } catch (err) {
     console.error('Erreur lors de la suppression du favori:', err)
-    alert('Erreur lors de la suppression du favori. Veuillez réessayer.')
+    alert('Erreur lors de la suppression du favori.')
   }
 }
 
-// 'onMounted' est un hook de cycle de vie de Vue.js qui s'exécute une fois
-// que le composant a été monté (inséré dans le DOM).
 onMounted(() => {
-  // S'assurer que l'état d'authentification est correct au chargement
-  // Vérifie si un token est présent dans le stockage local pour déterminer si l'utilisateur est potentiellement connecté.
   if (localStorage.getItem('auth_token') !== null) {
-    // Met à jour l'état du store si un token est trouvé.
     userStore.isAuthenticated = true
-  } // Charger les favoris si l'utilisateur est un candidat
-  // Appelle la fonction de chargement des favoris uniquement si l'utilisateur est authentifié et n'est pas une entreprise.
+  }
 
   if (userStore.isAuthenticated && !isCompany) {
     fetchFavoriteOffers()
@@ -117,7 +82,7 @@ onMounted(() => {
 
     <div class="offer-card" v-for="offer in favoriteOffers" :key="offer.id">
       <div class="card-image">
-        <img :src="`${import.meta.env.VITE_API_URL}` + offer.image_url" alt="Image offre" />
+        <img :src="apiUrl + offer.image_url" alt="Image offre" />
         <div class="image-overlay">
           <span class="badge badge-employment">{{ offer.employment_type.name }}</span>
           <span class="badge badge-category">{{ offer.category }}</span
@@ -186,20 +151,7 @@ onMounted(() => {
       </div>
 
       <div class="card-footer" v-if="userStore.isAuthenticated && !isCompany">
-        <a :href="`/offers/apply/${offer.id}`" class="btn-apply">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            fill="currentColor"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293z"
-            />
-          </svg>
-          Postuler à l'offre
-        </a>
+        <a :href="`/offers/apply/${offer.id}`" class="btn-apply"> Postuler à l'offre </a>
 
         <button
           @click="removeFavorite(offer.id)"
@@ -211,9 +163,7 @@ onMounted(() => {
         </button>
       </div>
       <div class="card-footer" v-else-if="isCompany">
-        <span class="btn-apply"
-          >Les entreprises ne peuvent pas postuler ou ajouter aux favoris.</span
-        >
+        <span class="btn-apply">Les entreprises ne peuvent pas postuler.</span>
       </div>
       <div class="card-footer" v-else>
         <a href="/SignIn" class="btn-apply">Connectez-vous pour postuler</a>

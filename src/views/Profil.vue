@@ -3,6 +3,9 @@ import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import { useUserStore } from '@/stores/user'
 
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
+
 const userStore = useUserStore()
 const token = localStorage.getItem('auth_token')
 
@@ -10,16 +13,16 @@ const token = localStorage.getItem('auth_token')
 const user = ref(null)
 
 const readProfil = async () => {
-  const userId = userStore.user.id
+  const userId = userStore.user?.id
 
   if (!userId) {
-    console.error('ID de user non trouvé dans les paramètres de la route.')
+    console.error('ID de user non trouvé.')
     return
   }
 
   try {
-    // on apl l'endpoint spécifique par ID (selon votre API Laravel)
-    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/userById/${userId}`, {
+    // Utilisation de apiUrl ici
+    const responses = await axios.get(`${apiUrl}/api/userById/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -29,7 +32,7 @@ const readProfil = async () => {
     user.value = responses.data.data
     console.log(user.value)
   } catch (err) {
-    console.log('Erreur lors de la récupération des détails de user par ID :', err)
+    console.log('Erreur lors de la récupération des détails de user :', err)
   }
 }
 
@@ -40,11 +43,7 @@ onMounted(readProfil)
   <div class="page-background-profil" v-if="user">
     <div class="photo-edit-zone">
       <p class="user-qualification">{{ user.qualification }}</p>
-      <img
-        class="profil-photo"
-        :src="`${import.meta.env.VITE_API_URL}/storage/` + user.photo"
-        alt="Photo de profil"
-      />
+      <img class="profil-photo" :src="apiUrl + '/storage/' + user.photo" alt="Photo de profil" />
       <a href="/Profil/UpdateProfil" class="btn-edit-float" title="Modifier le profil">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
           <path
@@ -67,9 +66,7 @@ onMounted(readProfil)
               />
             </svg>
             <span>Email :</span>
-            <a href="mailto:seghiriahmed9@gmail.com" class="info-value email-link">{{
-              user.email
-            }}</a>
+            <a :href="'mailto:' + user.email" class="info-value email-link">{{ user.email }}</a>
           </p>
 
           <p class="info-item">
@@ -120,10 +117,7 @@ onMounted(readProfil)
               />
             </svg>
             <span>CV :</span>
-            <a
-              :href="`${import.meta.env.VITE_API_URL}/storage/` + user.cv_pdf"
-              target="_blank"
-              class="cv-link"
+            <a :href="apiUrl + '/storage/' + user.cv_pdf" target="_blank" class="cv-link"
               >Télécharger</a
             >
           </p>

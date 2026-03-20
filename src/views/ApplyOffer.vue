@@ -3,23 +3,25 @@ import { ref, defineProps } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
+
 const router = useRouter()
 
 // --- Récupération de l'ID passé dans l'URL via Vue Router ---
-// Exemple : /Home/apply/12  => offerId = 12
 const props = defineProps({
   offerId: {
     type: Number,
-    required: true, // si manquant -> erreur Vue
+    required: true,
   },
 })
 
 // --- État du composant ---
 const motivation = ref('')
-const isApplied = ref(false) // True si déjà postulé
-const loading = ref(false) // True pendant l'appel API
-const message = ref('') // Message pour l'utilisateur
-const authToken = ref(localStorage.getItem('auth_token')) // Token Sanctum stocké lors du login
+const isApplied = ref(false)
+const loading = ref(false)
+const message = ref('')
+const authToken = ref(localStorage.getItem('auth_token'))
 
 // --- Fonction d'envoi de candidature ---
 const applyToOffer = async () => {
@@ -32,7 +34,8 @@ const applyToOffer = async () => {
   formData.append('motivation_text', motivation.value)
 
   try {
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/apply-offer`, formData, {
+    // Utilisation de apiUrl au lieu de import.meta.env direct
+    const response = await axios.post(`${apiUrl}/api/apply-offer`, formData, {
       headers: {
         Authorization: `Bearer ${authToken.value}`,
         'Content-Type': 'multipart/form-data',
@@ -42,16 +45,18 @@ const applyToOffer = async () => {
     // Succès
     message.value = '✅ ' + response.data.message
     isApplied.value = true
-    motivation.value = '' // reset du champ motivation
-    router.back() // retourne vers la page precedente
+    motivation.value = ''
+
+    setTimeout(() => {
+      router.back()
+    }, 1500)
   } catch (error) {
-    // Erreurs backend
     isApplied.value = false
 
     if (error.response) {
       if (error.response.status === 409) {
         message.value = '⚠️ ' + error.response.data.message
-        isApplied.value = true // déjà postulé
+        isApplied.value = true
       } else if (error.response.data.errors) {
         message.value = '❌ Erreur de validation: Le champ motivation est obligatoire.'
       } else {
@@ -70,13 +75,12 @@ const applyToOffer = async () => {
   <div class="apply-container">
     <h1 class="apply-title">POSTULER MAINTENANT !</h1>
 
-    <!-- Formulaire Vue, pas PHP -->
     <form @submit.prevent="applyToOffer" class="apply-form">
       <div class="motivation-field">
         <label for="inputMotivation" class="field-label">MOTIVATION :</label>
         <p style="font-size: 12px; font-family: inherit; color: green">
           (Votre CV et vos informations personnelles sont <br />
-          déjà importé depuis votre profil !)
+          déjà importés depuis votre profil !)
         </p>
 
         <textarea
@@ -92,8 +96,7 @@ const applyToOffer = async () => {
           {{ loading ? 'Envoi...' : isApplied ? 'Déjà postulé' : 'Envoyer' }}
         </button>
 
-        <!-- Messages -->
-        <p v-if="message">{{ message }}</p>
+        <p v-if="message" class="status-message">{{ message }}</p>
       </div>
     </form>
   </div>

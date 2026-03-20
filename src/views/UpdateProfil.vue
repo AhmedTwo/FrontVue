@@ -4,10 +4,13 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
+
 const userStore = useUserStore()
 const router = useRouter()
 
-const profilId = userStore.user.id
+const profilId = userStore.user?.id
 const isLoading = ref(true)
 
 const profil = ref({
@@ -37,13 +40,13 @@ const loadProfil = async () => {
   const token = localStorage.getItem('auth_token')
 
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/userById/${profilId}`, {
+    // Utilisation de apiUrl ici
+    const response = await axios.get(`${apiUrl}/api/userById/${profilId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
 
-    // Détecte automatiquement si les données sont dans "data" ou pas
     const data = response.data.data ? response.data.data : response.data
 
     profil.value = {
@@ -60,17 +63,16 @@ const loadProfil = async () => {
       cv_pdf: data.cv_pdf,
     }
 
-    // si une photo existe, on prépare l'aperçu
+    // Aperçus avec apiUrl
     if (data.photo) {
-      photoPreview.value = `${import.meta.env.VITE_API_URL}/storage/${data.photo}`
+      photoPreview.value = `${apiUrl}/storage/${data.photo}`
     }
-    // si un cv existe, on prépare l'aperçu
     if (data.cv_pdf) {
-      CvPreview.value = `${import.meta.env.VITE_API_URL}/storage/${data.cv_pdf}`
+      CvPreview.value = `${apiUrl}/storage/${data.cv_pdf}`
     }
   } catch (error) {
     console.error('Erreur lors du chargement du Profil :', error)
-    alert('Impossible de charger le profil à modifier.')
+    alert('Impossible de charger le profil.')
   } finally {
     isLoading.value = false
   }
@@ -105,29 +107,17 @@ const updateProfil = async () => {
   formData.append('qualification', profil.value.qualification)
   formData.append('disponibilite', profil.value.disponibilite ? 1 : 0)
 
-  // MDP actuel
-  if (currentPassword.value) {
-    formData.append('current_password', currentPassword.value)
-  }
-
-  // Nouveau mot de passe + confirmation
+  if (currentPassword.value) formData.append('current_password', currentPassword.value)
   if (newPassword.value) {
     formData.append('new_password', newPassword.value)
     formData.append('new_password_confirmation', confirmPassword.value)
   }
-
-  // si une nouvelle photo a été sélectionnée
-  if (newPhoto.value) {
-    formData.append('photo', newPhoto.value)
-  }
-
-  // si une nouveau cv a été sélectionné
-  if (newCV.value) {
-    formData.append('cv_pdf', newCV.value)
-  }
+  if (newPhoto.value) formData.append('photo', newPhoto.value)
+  if (newCV.value) formData.append('cv_pdf', newCV.value)
 
   try {
-    await axios.post(`${import.meta.env.VITE_API_URL}/api/userUpdate/${profilId}`, formData, {
+    // Utilisation de apiUrl ici
+    await axios.post(`${apiUrl}/api/userUpdate/${profilId}`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'multipart/form-data',
@@ -135,7 +125,7 @@ const updateProfil = async () => {
     })
 
     alert('✅ Profil mis à jour avec succès')
-    router.back() // retourne vers la page precedente
+    router.back()
   } catch (error) {
     console.error('Erreur lors de la mise à jour :', error)
     alert('❌ Erreur lors de la mise à jour du Profil.')
@@ -174,11 +164,11 @@ onMounted(loadProfil)
 
         <div class="form-row">
           <div class="form-group">
-            <label for="Nom">Nom </label>
+            <label for="Nom">Nom</label>
             <input id="Nom" type="text" v-model="profil.nom" required />
           </div>
           <div class="form-group">
-            <label for="prenom">Nom </label>
+            <label for="prenom">Prénom</label>
             <input id="prenom" type="text" v-model="profil.prenom" required />
           </div>
         </div>
@@ -191,39 +181,6 @@ onMounted(loadProfil)
           <div class="form-group">
             <label for="current_password">Mot de passe actuel</label>
             <input id="current_password" type="password" v-model="currentPassword" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="new_password">Nouveau mot de passe</label>
-            <input id="new_password" type="password" v-model="newPassword" />
-          </div>
-          <div class="form-group">
-            <label for="confirm_password">Confirmer le nouveau mot de passe</label>
-            <input id="confirm_password" type="password" v-model="confirmPassword" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="telephone">Téléphone</label>
-            <input id="telephone" type="tel" v-model="profil.telephone" />
-          </div>
-          <div class="form-group">
-            <label for="ville">Ville</label>
-            <input id="ville" type="text" v-model="profil.ville" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="code_postal">Code Postale</label>
-            <input id="code_postal" type="text" v-model="profil.code_postal" />
-          </div>
-          <div class="form-group">
-            <label for="qualification">Qualification / Poste</label>
-            <input id="qualification" type="text" v-model="profil.qualification" />
           </div>
         </div>
 
@@ -244,7 +201,7 @@ onMounted(loadProfil)
         <div class="form-group checkbox-group">
           <label for="disponible">
             <input id="disponible" type="checkbox" v-model="profil.disponibilite" />
-            Disponible immédiatement pour de nouvelles opportunités
+            Disponible immédiatement
           </label>
         </div>
 
@@ -255,7 +212,6 @@ onMounted(loadProfil)
     </div>
   </div>
 </template>
-
 <style scoped>
 /* 🌐 CONTENEUR GLOBAL */
 .page-background {

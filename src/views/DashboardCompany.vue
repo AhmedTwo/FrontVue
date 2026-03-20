@@ -4,65 +4,58 @@ import axios from 'axios'
 import { useUserStore } from '@/stores/user'
 import { RouterLink } from 'vue-router'
 
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
+
 const userStore = useUserStore()
 
 const offers = ref([])
-const company = ref(null) // Pour stocker les détails de la société
+const company = ref(null)
 
-//  on recup le token d'authentification depuis le localStorage
 const token = localStorage.getItem('auth_token')
 
-//  CHARGEMENT DES OFFRES
+// CHARGEMENT DES OFFRES
 const loadOffers = async () => {
-  if (!token) {
-    console.error("Token d'authentification manquant.")
-    return
-  }
+  if (!token) return
 
   try {
-    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/myOffers`, {
+    const responses = await axios.get(`${apiUrl}/api/myOffers`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     offers.value = responses.data.data
   } catch (err) {
     console.error('Erreur lors de la récupération des offres :', err)
-    // Gestion de l'erreur d'API ou d'expiration du token
   }
 }
 
-//  CHARGEMENT DES DÉTAILS DE LA SOCIÉTÉ
+// CHARGEMENT DES DÉTAILS DE LA SOCIÉTÉ
 const loadCompanyDetails = async () => {
   const companyId = userStore.user?.company_id
 
-  if (!companyId) {
-    // C'est normal si l'utilisateur n'est pas lié à une entreprise (ex: simple candidat)
-    console.log("L'utilisateur n'est pas associé à une société (company_id est null).")
-    return
-  }
+  if (!companyId) return
 
   try {
-    // Appel de l'endpoint pour récupérer la société par son ID
-    const responses = await axios.get(`http://127.0.0.1:8000/api/companyById/${companyId}`)
+    // CORRECTION : Utilisation de apiUrl au lieu de 127.0.0.1
+    const responses = await axios.get(`${apiUrl}/api/companyById/${companyId}`)
     company.value = responses.data.data
   } catch (err) {
     console.error("Erreur lors de la récupération des détails de l'entreprise :", err)
   }
 }
 
-//  FONCTION DE SUPPRESSION D'OFFRE
+// FONCTION DE SUPPRESSION D'OFFRE
 const deleteOffer = async (offerId) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette offre ?')) {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/deleteOffer/${offerId}`, {
+      // CORRECTION : Utilisation de apiUrl au lieu de 127.0.0.1
+      await axios.delete(`${apiUrl}/api/deleteOffer/${offerId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
-      // Retirer l'offre du tableau local
       offers.value = offers.value.filter((req) => req.id !== offerId)
-      console.log(`Offre ID ${offerId} supprimée.`)
     } catch (err) {
       console.error("Erreur lors de la suppression de l'offre :", err)
-      alert('Erreur lors de la suppression. Veuillez réessayer.')
+      alert('Erreur lors de la suppression.')
     }
   }
 }
@@ -120,28 +113,13 @@ onMounted(() => {
             </p>
           </div>
           <RouterLink :to="{ name: 'Modif Company Dashboard' }" class="btn btn-update-company">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              fill="currentColor"
-              viewBox="0 0 16 16"
-            >
-              <path
-                d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
-              />
-              <path
-                fill-rule="evenodd"
-                d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
-              />
-            </svg>
             Modifier la Société
           </RouterLink>
         </div>
 
         <div class="detail-card card-description">
           <img
-            :src="`${import.meta.env.VITE_API_URL}/storage/` + company.logo"
+            :src="apiUrl + '/storage/' + company.logo"
             :alt="`Logo ${company.name}`"
             class="company-logo"
             v-if="company.logo"
@@ -153,10 +131,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-else-if="userStore.user?.company_id !== null" class="loading-message">
-      <p>Chargement des détails de la société...</p>
-    </div>
-
     <hr v-if="company" class="divider" />
 
     <div class="header-section">
@@ -165,29 +139,13 @@ onMounted(() => {
     </div>
 
     <div class="action-bar">
-      <RouterLink :to="{ name: `Ajout d'une offre` }" class="btn-add">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          fill="currentColor"
-          viewBox="0 0 16 16"
-        >
-          <path
-            d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"
-          />
-          <path
-            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"
-          />
-        </svg>
-        Ajouter une offre
-      </RouterLink>
+      <RouterLink :to="{ name: `Ajout d'une offre` }" class="btn-add">Ajouter une offre</RouterLink>
     </div>
 
     <div class="offers-grid">
       <div class="offer-card" v-for="offer in offers" :key="offer.id">
         <div class="card-image">
-          <img :src="`${import.meta.env.VITE_API_URL}` + offer.image_url" alt="Image offre" />
+          <img :src="apiUrl + offer.image_url" alt="Image offre" />
           <div class="image-overlay">
             <span class="badge badge-employment">{{ offer.employment_type.name }}</span>
             <span class="badge badge-category">{{ offer.category }}</span>
@@ -197,102 +155,15 @@ onMounted(() => {
         <div class="card-body">
           <h3 class="offer-title">{{ offer.title }}</h3>
           <p class="offer-description">{{ offer.description }}</p>
-
-          <div class="offer-details">
-            <div class="detail-row">
-              <svg
-                class="icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              <span>{{ offer.location }}</span>
-            </div>
-
-            <div class="detail-row">
-              <svg
-                class="icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-              <span>{{ offer.participants_count }} postulants</span>
-            </div>
-
-            <div class="detail-row">
-              <svg
-                class="icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
-              <span>{{ offer.created_at }}</span>
-            </div>
-          </div>
-
-          <div class="mission-section" v-if="offer.mission">
-            <strong>Mission :</strong>
-            <p>{{ offer.mission }}</p>
-          </div>
-
-          <div class="benefits-section" v-if="offer.benefits">
-            <strong>Avantages :</strong>
-            <p>{{ offer.benefits }}</p>
-          </div>
         </div>
 
         <div class="card-footer">
           <RouterLink
             :to="{ name: 'Modif Offre Company', params: { id: offer.id } }"
             class="btn btn-update"
+            >Modifier</RouterLink
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              viewBox="0 0 16 16"
-            >
-              <path
-                d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
-              />
-              <path
-                fill-rule="evenodd"
-                d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
-              />
-            </svg>
-            Modifier
-          </RouterLink>
-          <button
-            type="button"
-            class="btn btn-delete"
-            title="Supprimer cette demande"
-            @click="deleteOffer(offer.id)"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              fill="currentColor"
-              viewBox="0 0 16 16"
-            >
-              <path
-                d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"
-              />
-            </svg>
+          <button type="button" class="btn btn-delete" @click="deleteOffer(offer.id)">
             Supprimer
           </button>
         </div>

@@ -3,44 +3,48 @@ import { onMounted, ref, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
 import axios from 'axios'
 
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
+
 // ref est une syntaxe qui permet de dynamiser une variable pour l'afficher dans le html
 const requests = ref([])
 const userStore = useUserStore()
 const nbRequest = ref([])
 
-//  on recup le token d'authentification depuis le localStorage
+// on recup le token d'authentification depuis le localStorage
 const token = localStorage.getItem('auth_token')
 
 const readRequest = async () => {
-  // temps de chargement front plus rapide, avec la donnée qui arrive
   try {
-    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/allRequest`, {
+    // Utilisation de apiUrl ici
+    const responses = await axios.get(`${apiUrl}/api/allRequest`, {
       headers: { Authorization: `Bearer ${token}` },
     })
 
     requests.value = responses.data.data
-    // console.log(requests.value)
   } catch (err) {
     console.log(err)
   }
 }
 
-onMounted(readRequest)
-
 // Vérifier si l'utilisateur est admin
 const isAdmin = computed(() => userStore.user?.role === 'admin')
 
-// Logique pour compter (inchangée)
+// Logique pour compter
 const count = async () => {
   try {
-    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/count`)
+    // Utilisation de apiUrl ici
+    const responses = await axios.get(`${apiUrl}/api/count`)
     nbRequest.value = responses.data.Request
   } catch (err) {
     console.log(err)
   }
 }
 
-onMounted(count)
+onMounted(() => {
+  readRequest()
+  count()
+})
 </script>
 
 <template>
@@ -54,10 +58,7 @@ onMounted(count)
       <div class="request-card" v-for="request in requests" :key="request.id">
         <div class="card-header">
           <div class="user-avatar">
-            <img
-              :src="`${import.meta.env.VITE_API_URL}/storage/` + request.photo"
-              alt="Photo Utilisateur"
-            />
+            <img :src="apiUrl + '/storage/' + request.photo" alt="Photo Utilisateur" />
           </div>
           <div class="user-info">
             <h3 class="user-name">{{ request.nom }} {{ request.prenom }}</h3>

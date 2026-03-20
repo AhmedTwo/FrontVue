@@ -3,43 +3,39 @@ import ImagesPortal from '../assets/images/Portal.png'
 import ImagesLogo from '../assets/images/imagePortal.png'
 
 // --- 2. Importations des Librairies et Fonctions Vue/Externes ---
-import { ref } from 'vue' // 'ref', fonction pour créer des variables réactives (qui mettent à jour l'interface automatiquement).
-import api from '@/services/api' // instance d'Axios personnalisée pour faire les requêtes HTTP.
-import { useRouter } from 'vue-router' // 'useRouter' permet de naviguer entre les pages après une action.
+import { ref } from 'vue'
+import api from '@/services/api'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
-// --- 3. Initialisation et Variables Réactives ---
-const router = useRouter() // le routeur : cela nous donne accès aux méthodes de navigation (comme 'push').
-const errorMessage = ref('') // Variable réactive pour stocker et afficher les messages d'erreur à l'utilisateur.
+// --- CONFIGURATION API ---
+// Même si tu utilises 'api', on garde la constante par sécurité pour le build
+const apiUrl = import.meta.env.VITE_API_URL
+
+const router = useRouter()
+const errorMessage = ref('')
 const userStore = useUserStore()
 
-// Variable réactive pour stocker les données du formulaire de connexion. (vide au départ)
 const login = ref({
   email: '',
   password: '',
 })
 
 // --- 4. Fonction Principale de Connexion ---
-// Fonction asynchrone pour gérer la soumission du formulaire.
 const loginUser = async () => {
   try {
-    // Tente d'envoyer une requête POST au serveur sur le point de terminaison '/login'.
-    // 'login.value' contient l'objet { email: '...', password: '...' }.
-    const responses = await api.post('/login', login.value) // Si la connexion réussit :
-    // 1. Stocke le token d'authentification reçu du serveur dans le stockage local (LocalStorage).
-    // C'est ce token qui sera automatiquement ajouté aux futures requêtes par l'intercepteur !
+    // On utilise l'instance 'api' qui pointe déjà vers la bonne URL
+    const responses = await api.post('/login', login.value)
+
     localStorage.setItem('auth_token', responses.data.token)
     userStore.login(responses.data.user)
-    // console.log(responses.data) // Affiche la réponse du serveur dans la console (pour débogage).
-    router.push('/offers') // Redirige l'utilisateur vers la page '/Home'. suite de la connexion réussi.
+
+    router.push('/offers')
   } catch (err) {
-    console.log(err) // Affiche l'erreur complète dans la console (pour le développeur).
-    // Vérifie si l'erreur est une réponse HTTP spécifique (ex: 401 Unauthorized).
+    console.log(err)
     if (err.response && err.response.status === 401) {
-      // Affiche un message d'erreur spécifique pour l'utilisateur.
-      errorMessage.value = 'Votre email mot de passe et/ou mot de passe est incorrect !'
+      errorMessage.value = 'Votre email et/ou mot de passe est incorrect !'
     } else {
-      // Affiche un message d'erreur générique pour les autres types de problèmes.
       errorMessage.value = 'Veuillez remplir les champs !'
     }
   }
@@ -54,12 +50,8 @@ const loginUser = async () => {
         CONNEXION &nbsp;&nbsp;
         <img :src="ImagesPortal" alt="fond logo porte de portal job" width="35" />
       </h1>
-      <!-- &nbsp; me permet de faire un espace en html -->
 
       <form id="loginForm" @submit.prevent="loginUser">
-        <!-- ecoute la soumission du form avec @submit -->
-        <!-- empeche le rechargement de la page avec .prevent -->
-        <!-- pui sa execute la fonction loginUser -->
         <div class="divLogin">
           <label for="inputEmail">Email :</label>
           <input
@@ -80,9 +72,11 @@ const loginUser = async () => {
             placeholder="&nbsp;********"
           />
         </div>
+
         <div v-if="errorMessage">
           <span style="color: red">{{ errorMessage }}</span>
         </div>
+
         <p><a href="/SignIn/passwordForget">Mot de passe oublié ?</a></p>
 
         <div id="inscri_apply">

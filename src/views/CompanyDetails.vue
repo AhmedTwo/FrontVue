@@ -4,6 +4,9 @@ import axios from 'axios'
 // on importe useRoute de vue-router pour accéder aux paramètres de l'URL
 import { useRoute } from 'vue-router'
 
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
+
 const route = useRoute()
 
 // on change le nom de la variable pour stocker un seul objet
@@ -19,10 +22,8 @@ const readCompany = async () => {
   }
 
   try {
-    // on apl l'endpoint spécifique par ID (selon votre API Laravel)
-    const responses = await axios.get(
-      `${import.meta.env.VITE_API_URL}/api/companyById/${companyId}`,
-    )
+    // Utilisation de apiUrl ici
+    const responses = await axios.get(`${apiUrl}/api/companyById/${companyId}`)
 
     // on stock l'objet unique dans la variable 'company'
     companys.value = responses.data.data
@@ -44,10 +45,7 @@ onMounted(readCompany)
 
     <div class="company-details-grid" v-if="companys">
       <div class="header-card">
-        <img
-          :src="`${import.meta.env.VITE_API_URL}/storage/` + companys.logo"
-          :alt="`Logo ${companys.name}`"
-        />
+        <img :src="apiUrl + '/storage/' + companys.logo" :alt="`Logo ${companys.name}`" />
         <div class="company-title-block">
           <h2 class="company-main-name">{{ companys.name }}</h2>
           <p class="subtitle">{{ companys.industry }}</p>

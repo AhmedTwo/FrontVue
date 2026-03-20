@@ -1,187 +1,116 @@
 <script setup>
-// Importe les fonctions de Vue nécessaires pour les propriétés calculées, le cycle de vie, et l'état réactif.
+// Importe les fonctions de Vue nécessaires
 import { computed, onMounted, ref } from 'vue'
-// Importe le store Pinia pour accéder aux informations de l'utilisateur (authentification, rôle).
+// Importe le store Pinia
 import { useUserStore } from '@/stores/user'
-// Importe la librairie HTTP pour effectuer des requêtes API.
+// Importe axios
 import axios from 'axios'
 
-// --- 1. Variables Réactives d'État ---
-// on crée une référence réactive pour stocker la liste de toutes les offres d'emploi récupérées avec l'API.
-const offers = ref([])
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
 
-// on crée une référence réactive pour stocker les IDs des offres que l'utilisateur a mises en favoris.
-// on utilise un Set ce qui est optimal pour vérifier rapidement si un élément est inclus (O(1)).
+// --- 1. Variables Réactives d'État ---
+const offers = ref([])
 const favoritesIds = ref(new Set())
 
-// Variables réactives pour stocker les valeurs des champs de recherche/filtres.
 const searchCity = ref('')
 const searchContract = ref('')
 const searchName = ref('')
 const searchDomain = ref('')
 
-// on crée une instance du store utilisateur pour accéder aux données et à l'état d'authentification.
 const userStore = useUserStore()
 
 // --- 2. Propriétés Calculées ---
-// Propriété calculée pour vérifier rapidement si l'utilisateur est une 'company'.
-// Ceci évite de charger les favoris ou d'afficher le bouton Favoris pour ce rôle.
 const isCompany = computed(() => userStore.user?.role === 'company')
 
-// Propriété calculée pour filtrer la liste des offres basées sur les entrées de recherche.
-// Elle se recalcule automatiquement dès que 'offers.value' ou une variable 'search...' change.
 const filteredOffers = computed(() => {
-  // Rend les filtres plus faciles à utiliser : en minuscule, sans espaces et sans accent (si on ajoute une librairie).
   const cityFilter = searchCity.value.toLowerCase().trim()
   const contractFilter = searchContract.value.toLowerCase().trim()
   const nameFilter = searchName.value.toLowerCase().trim()
   const domainFilter = searchDomain.value.toLowerCase().trim()
 
-  // Optimisation : Si aucun filtre n'est saisi, retourne l'intégralité des offres sans itérer.
   if (!cityFilter && !contractFilter && !nameFilter && !domainFilter) {
     return offers.value
   }
 
-  // on filtre les offres en appliquant toutes les conditions de recherche.
   return offers.value.filter((offer) => {
-    // La fonction de vérification de filtre retourne 'true' si le filtre n'est pas appliqué (chaîne vide)
-    // OU si la valeur de l'offre inclut le terme de recherche (insensible à la casse).
-
-    // Vérification de la Ville (location)
     const matchesCity = !cityFilter || offer.location.toLowerCase().includes(cityFilter)
-
-    // Vérification du Contrat (employment_type.name)
     const matchesContract =
-      !contractFilter || offer.employment_type.name.toLowerCase().includes(contractFilter)
-
-    // Vérification du Nom/Titre (title)
+      !contractFilter || (offer.employment_type?.name || '').toLowerCase().includes(contractFilter)
     const matchesName = !nameFilter || offer.title.toLowerCase().includes(nameFilter)
+    const matchesDomain =
+      !domainFilter || (offer.category || '').toLowerCase().includes(domainFilter)
 
-    // Vérification du Domaine (category)
-    const matchesDomain = !domainFilter || offer.category.toLowerCase().includes(domainFilter)
-
-    // L'offre doit satisfaire TOUS les filtres qui ont été saisis.
     return matchesCity && matchesContract && matchesName && matchesDomain
   })
 })
 
-// --- 3. Fonctions d'API et de Logique ---
-// Fonction pour récupérer toutes les offres d'emploi disponibles.
+// --- 3. Fonctions d'API ---
 const readOffer = async () => {
   try {
-    // Envoie une requête GET vers le endpoint qui liste toutes les offres.
-    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/allOffer`)
-    // Met à jour la variable réactive 'offers' avec le tableau de données.
+    const responses = await axios.get(`${apiUrl}/api/allOffer`)
     offers.value = responses.data.data
   } catch (err) {
-    // Affiche l'erreur en console si la requête échoue.
     console.error('Erreur lors de la récupération des offres:', err)
   }
 }
 
-// Fonction pour vérifier si une offre spécifique (par ID) est dans les favoris de l'utilisateur.
-// Utilise le Set pour une recherche rapide O(1).
 const isFavorite = (offerId) => favoritesIds.value.has(offerId)
 
-// Fonction pour récupérer les IDs des offres favorites de l'utilisateur connecté.
 const fetchFavorites = async () => {
-  // Condition de garde : sort si l'utilisateur n'est pas connecté ou est une entreprise.
-  if (!userStore.isAuthenticated || isCompany.value) {
-    return
-  }
+  if (!userStore.isAuthenticated || isCompany.value) return
 
   const token = localStorage.getItem('auth_token')
-  // Condition de garde si le token est manquant malgré l'état d'authentification.
-  if (!token) {
-    console.warn("Jeton d'authentification manquant pour charger les favoris.")
-    return
-  }
+  if (!token) return
 
   try {
-    // Envoie une requête GET vers le endpoint des favoris.
-    const responses = await axios.get(`${import.meta.env.VITE_API_URL}/api/favorites`, {
-      headers: {
-        // Ajoute l'en-tête d'autorisation Bearer Token pour les routes protégées.
-        Authorization: `Bearer ${token}`,
-      },
+    const responses = await axios.get(`${apiUrl}/api/favorites`, {
+      headers: { Authorization: `Bearer ${token}` },
     })
-
-    // Extrait les IDs : crée un tableau contenant uniquement l'ID de chaque offre favorite.
     const ids = responses.data.data.map((offer) => offer.id)
-    // Met à jour le Set réactif 'favoritesIds' pour une utilisation rapide.
     favoritesIds.value = new Set(ids)
   } catch (err) {
     console.error('Erreur lors de la récupération des favoris:', err)
-    // Gestion des erreurs (401, etc.)
   }
 }
 
-// Fonction pour ajouter ou retirer une offre des favoris.
 const toggleFavorite = async (offerId) => {
-  // Condition de garde : l'action nécessite une authentification et n'est pas pour une company.
-  if (!userStore.isAuthenticated || isCompany.value) {
-    return
-  }
+  if (!userStore.isAuthenticated || isCompany.value) return
 
   const token = localStorage.getItem('auth_token')
-  if (!token) return // Condition de garde si le token est manquant.
+  if (!token) return
 
   const isCurrentlyFavorite = isFavorite(offerId)
-
-  // Détermine l'action et la méthode HTTP appropriées.
   const action = isCurrentlyFavorite ? 'remove' : 'add'
   const method = isCurrentlyFavorite ? 'delete' : 'post'
-  // Construit l'URL complète dynamiquement.
-  const url = `${import.meta.env.VITE_API_URL}/api/favorites/${action}/${offerId}`
+  const url = `${apiUrl}/api/favorites/${action}/${offerId}`
 
   try {
-    // Exécute la requête HTTP (POST pour ajouter, DELETE pour retirer).
     await axios({
       method: method,
       url: url,
-      headers: {
-        // Ajoute le token pour l'autorisation.
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     })
 
-    // Met à jour l'état local (favoritesIds) immédiatement après le succès de l'API.
     if (isCurrentlyFavorite) {
-      favoritesIds.value.delete(offerId) // Retirer l'ID du Set
+      favoritesIds.value.delete(offerId)
     } else {
-      favoritesIds.value.add(offerId) // Ajouter l'ID au Set
+      favoritesIds.value.add(offerId)
     }
-
-    // OPTIMISATION/CORRECTION : on force Vue à détecter la modification du Set.
-    // Vue ne réagit pas aux méthodes .add() ou .delete() d'un Set réactif,
-    // donc on lui assigne une nouvelle instance de Set pour forcer la mise à jour des composants dépendants.
     favoritesIds.value = new Set(favoritesIds.value)
   } catch (err) {
     console.error('Erreur lors de la mise à jour des favoris:', err)
-    alert('Erreur lors de la mise à jour des favoris. Veuillez réessayer.')
   }
 }
 
-// --- 4. Hooks du Cycle de Vie ---
-// 'onMounted' est appelé une fois que le composant est monté dans le DOM.
-// 1. Appel de la fonction pour récupérer toutes les offres.
-onMounted(readOffer)
-
-// 2. Logique d'authentification et de chargement des favoris.
+// --- 4. Hooks ---
 onMounted(() => {
-  // Vérifie si un token d'authentification est présent au chargement de la page.
+  readOffer()
   if (localStorage.getItem('auth_token') !== null) {
-    // Si oui, on met à jour l'état d'authentification dans le store (si non fait par l'intercepteur).
     userStore.isAuthenticated = true
-    // Lance le chargement des favoris de l'utilisateur connecté.
     fetchFavorites()
   }
 })
-
-// --- 5. Exportation (nécessaire avec <script setup>) ---
-// Rendre les variables et fonctions disponibles pour la partie <template> du composant.
-// (Inclus implicitement par <script setup> mais listé ici pour la clarté conceptuelle)
-// { offers, searchCity, searchContract, searchName, searchDomain, filteredOffers, isFavorite, toggleFavorite }
 </script>
 
 <template>
@@ -221,16 +150,14 @@ onMounted(() => {
 
   <div class="offers-grid">
     <div v-if="filteredOffers.length === 0" class="no-results-message">
-      <p>
-        😢 **Aucune offre ne correspond à vos critères de recherche.** Veuillez essayer avec
-        d'autres termes.
-      </p>
+      <p>😢 **Aucune offre ne correspond à vos critères de recherche.**</p>
     </div>
+
     <div class="offer-card" v-for="offer in filteredOffers" :key="offer.id">
       <div class="card-image">
-        <img :src="`${import.meta.env.VITE_API_URL}` + offer.image_url" alt="Image offre" />
+        <img :src="apiUrl + offer.image_url" alt="Image offre" />
         <div class="image-overlay">
-          <span class="badge badge-employment">{{ offer.employment_type.name }}</span>
+          <span class="badge badge-employment">{{ offer.employment_type?.name }}</span>
           <span class="badge badge-category">{{ offer.category }}</span
           ><br /><br />
         </div>
@@ -254,81 +181,26 @@ onMounted(() => {
             </svg>
             <span>{{ offer.location }}</span>
           </div>
-
-          <div class="detail-row">
-            <svg
-              class="icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            <span>{{ offer.participants_count }} postulants</span>
-          </div>
-
-          <div class="detail-row">
-            <svg
-              class="icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
-            </svg>
-            <span>{{ offer.created_at }}</span>
-            <!-- changer le format de la date -->
-          </div>
         </div>
 
         <div class="mission-section" v-if="offer.mission">
           <strong>Mission :</strong>
           <p>{{ offer.mission }}</p>
         </div>
-
-        <div class="benefits-section" v-if="offer.benefits">
-          <strong>Avantages :</strong>
-          <p>{{ offer.benefits }}</p>
-        </div>
       </div>
 
       <div class="card-footer" v-if="userStore.isAuthenticated && !isCompany">
-        <a :href="`/offers/apply/${offer.id}`" class="btn-apply">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            fill="currentColor"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293z"
-            />
-          </svg>
-          Postuler à l'offre
-        </a>
-
+        <a :href="`/offers/apply/${offer.id}`" class="btn-apply">Postuler</a>
         <button
           @click="toggleFavorite(offer.id)"
           class="btn-heart"
           :class="{ 'is-favorite': isFavorite(offer.id) }"
-          style="margin: 2%"
-          aria-label="Ajouter aux favoris"
         >
-          <span style="font-size: 35px">
-            {{ isFavorite(offer.id) ? '♥' : '♡' }}
-          </span>
+          <span style="font-size: 35px">{{ isFavorite(offer.id) ? '♥' : '♡' }}</span>
         </button>
       </div>
       <div class="card-footer" v-else-if="isCompany">
-        <span class="btn-apply"
-          >Les entreprises ne peuvent pas postuler ou ajouter aux favoris.</span
-        >
+        <span class="btn-apply">Les entreprises ne peuvent pas postuler.</span>
       </div>
       <div class="card-footer" v-else>
         <a href="/SignIn" class="btn-apply">Connectez-vous pour postuler</a>

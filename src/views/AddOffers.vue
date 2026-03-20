@@ -3,13 +3,15 @@ import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
+// --- CONFIGURATION API ---
+const apiUrl = import.meta.env.VITE_API_URL
+
 const router = useRouter()
 
-const loading = ref(false) // Indique que le processus (l'envoi de l'offre) a commencé
-const error = ref(null) // Réinitialise l'état d'erreur
-const success = ref(false) // Réinitialise l'état de succès
+const loading = ref(false)
+const error = ref(null)
+const success = ref(false)
 
-//  'ref' sert à stocker les données du formulaire et les lier aux inputs (v-model)
 const offerData = ref({
   title: '',
   description: '',
@@ -19,19 +21,14 @@ const offerData = ref({
   contract_id: null,
   technologies_used: '',
   benefits: '',
-  // NOUVEAU: Champ pour stocker l'objet File
   image_file: null,
 })
 
-// NOUVEAU: Gestion de l'upload de la photo de l'offre
 const handleImageUpload = (event) => {
-  // Récupère le premier fichier sélectionné
   const file = event.target.files ? event.target.files[0] : null
   offerData.value.image_file = file
 }
-// FIN NOUVEAU
 
-//  fonction d'ajout (POST)
 const addOffer = async () => {
   loading.value = true
   error.value = null
@@ -44,50 +41,43 @@ const addOffer = async () => {
     return
   }
 
-  // IMPORTANT: On utilise FormData pour les requêtes qui contiennent un fichier.
   const formData = new FormData()
-
-  // Remplissage des données de l'offre dans l'objet FormData
   formData.append('title', offerData.value.title)
   formData.append('description', offerData.value.description)
   formData.append('mission', offerData.value.mission)
   formData.append('location', offerData.value.location)
   formData.append('category', offerData.value.category)
-  // Assurez-vous que le nom de la clé correspond au backend : employment_type_id
   formData.append('employment_type_id', offerData.value.contract_id)
   formData.append('technologies_used', offerData.value.technologies_used)
   formData.append('benefits', offerData.value.benefits)
 
-  // NOUVEAU: Ajout du fichier image au FormData
   if (offerData.value.image_file) {
-    // Le nom de la clé doit correspondre au nom attendu par Laravel dans la validation
     formData.append('image_url', offerData.value.image_file)
   }
-  // FIN NOUVEAU
 
   try {
-    // ATTENTION: Quand on envoie un FormData, on n'ajoute PAS le 'Content-Type': 'multipart/form-data'
-    // Axios et le navigateur le gèrent automatiquement, et l'ajouter manuellement cause souvent des erreurs.
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/addOffer`, formData, {
+    // Utilisation de apiUrl ici
+    const response = await axios.post(`${apiUrl}/api/addOffer`, formData, {
       headers: {
-        Authorization: `Bearer ${token}`, // 'Content-Type' est retiré ou commenté car FormData le gère
-        // 'Content-Type': 'application/json', // NON, c'est pour du JSON simple
+        Authorization: `Bearer ${token}`,
       },
     })
 
     success.value = true
-    console.log('Offre ajoutée:', response.data) // redirection après succès
-    router.back()
+    console.log('Offre ajoutée:', response.data)
+
+    setTimeout(() => {
+      router.back()
+    }, 1000)
   } catch (err) {
-    console.error("Erreur lors de l'ajout de l'offre:", err.response?.data || err) // Gestion détaillée des erreurs de validation de Laravel
+    console.error("Erreur lors de l'ajout de l'offre:", err.response?.data || err)
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const errorsArray = Object.keys(err.response.data.errors).map(
         (key) => err.response.data.errors[key][0],
       )
       error.value = 'Erreur de validation. ' + errorsArray.join(' / ')
     } else {
-      error.value =
-        err.response?.data?.message || "Échec de l'ajout. Vérifiez les champs et la connexion."
+      error.value = err.response?.data?.message || "Échec de l'ajout."
     }
   } finally {
     loading.value = false
@@ -178,10 +168,8 @@ const addOffer = async () => {
           />
         </div>
 
-        <!-- Champ de fichier ajouté -->
-               
         <div class="divAdd">
-                    <label for="inputImage">IMAGE DE L'OFFRE (Optionnel)</label>          
+          <label for="inputImage">IMAGE DE L'OFFRE (Optionnel)</label>
           <input
             type="file"
             id="inputImage"
@@ -189,7 +177,6 @@ const addOffer = async () => {
             @change="handleImageUpload"
             class="input"
           />
-                 
         </div>
 
         <div v-if="error" class="divAdd message error-message">❌ {{ error }}</div>
