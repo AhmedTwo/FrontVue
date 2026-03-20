@@ -5,9 +5,6 @@ import axios from 'axios'
 import { useUserStore } from '@/stores/user'
 
 // ref est une syntaxe qui permet de dynamiser une variable pour l'afficher
-const nbUser = ref([])
-const nbOffer = ref([])
-const nbCompany = ref([])
 const offers = ref([])
 
 // Utilisation du store pour l'authentification
@@ -96,19 +93,6 @@ const toggleFavorite = async (offerId) => {
   }
 }
 
-// Logique pour compter (inchangée)
-const count = async () => {
-  try {
-    const responses = await axios.get(`${apiUrl}/api/count`)
-    nbUser.value = responses.data.User
-    nbOffer.value = responses.data.Offer
-    nbCompany.value = responses.data.Company
-  } catch (err) {
-    console.log(err)
-  }
-}
-onMounted(count)
-
 // Logique pour lire les offres (inchangée)
 const readOffer = async () => {
   try {
@@ -141,20 +125,6 @@ onMounted(() => {
         écologique, Santé... Profitez des options en télétravail, des postes hybrides, et des CDI à
         pourvoir immédiatement.
       </p>
-      <div class="stats-container">
-        <div class="stat-item">
-          <span class="stat-number">{{ nbUser }}</span>
-          <span class="stat-label">Utilisateurs inscrits</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">{{ nbOffer }}</span>
-          <span class="stat-label">Offres disponibles</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">{{ nbCompany }}</span>
-          <span class="stat-label">Sociétés inscrites</span>
-        </div>
-      </div>
     </div>
   </main>
 
