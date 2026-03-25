@@ -182,7 +182,7 @@ onMounted(loadProfil)
             <input id="Nom" type="text" v-model="profil.nom" required />
           </div>
           <div class="form-group">
-            <label for="prenom">Nom </label>
+            <label for="prenom">Prenom </label>
             <input id="prenom" type="text" v-model="profil.prenom" required />
           </div>
         </div>
@@ -200,12 +200,23 @@ onMounted(loadProfil)
 
         <div class="form-row">
           <div class="form-group">
-            <label for="new_password">Nouveau mot de passe</label>
-            <input id="new_password" type="password" v-model="newPassword" />
+            <label for="current_password">Mot de passe actuel</label>
+            <input
+              id="current_password"
+              type="password"
+              v-model="currentPassword"
+              autocomplete="new-password"
+              placeholder="Laisser vide pour ne pas modifier"
+            />
           </div>
           <div class="form-group">
-            <label for="confirm_password">Confirmer le nouveau mot de passe</label>
-            <input id="confirm_password" type="password" v-model="confirmPassword" />
+            <label for="new_password">Nouveau mot de passe</label>
+            <input
+              id="new_password"
+              type="password"
+              v-model="newPassword"
+              autocomplete="new-password"
+            />
           </div>
         </div>
 
