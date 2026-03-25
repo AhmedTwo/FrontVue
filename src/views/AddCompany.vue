@@ -169,7 +169,7 @@ const submitForm = async () => {
 
     const slugName = companyData.value.name.toLowerCase().replace(/\s/g, '-')
     autoEmail = `${slugName}@company.com` // Forme l'email de connexion généré (ex: 'ma-societe@company.com')
-    autoPassword = generateRandomPassword(8)
+    autoPassword = `password`
 
     // Crée un nouvel objet FormData pour les données utilisateur
     const userFormData = new FormData()
