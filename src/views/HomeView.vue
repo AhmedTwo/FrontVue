@@ -788,68 +788,82 @@ onMounted(() => {
   line-height: 1;
 }
 
-/* Responsive */
+/* ==========================================
+   RESPONSIVE ACCUEIL PORTAL JOB
+   ========================================== */
+
+/* 1. TABLETTES (Moins de 1024px) */
 @media (max-width: 1024px) {
+  .hero h1 {
+    font-size: 2.2rem; /* On réduit le titre principal */
+    width: 85%;
+    padding: 30px;
+  }
+
   .offers-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 28px;
+    grid-template-columns: repeat(2, 1fr); /* 2 colonnes sur tablette */
+    padding: 0 40px;
+  }
+
+  .background-logo {
+    height: 60vh; /* On réduit le logo de fond */
   }
 }
 
+/* 2. MOBILES LARGES (Moins de 768px) */
 @media (max-width: 768px) {
-  .latest-offers-section h1 {
+  .hero h1 {
+    font-size: 1.8rem;
+    width: 95%;
+    padding: 20px;
+  }
+
+  .hero p {
+    font-size: 1.1rem;
+  }
+
+  .offers-section h1 {
+    width: 90%;
+    padding: 10px 20px;
+    font-size: 1.5rem;
+  }
+
+  .pres-ul {
+    width: 95%; /* La liste prend plus de place sur mobile */
+  }
+
+  .offers-grid {
+    grid-template-columns: 1fr; /* 1 seule colonne sur mobile */
+    max-width: 450px; /* On évite que la carte soit trop large */
+  }
+}
+
+/* 3. PETITS MOBILES (Moins de 480px) */
+@media (max-width: 480px) {
+  .hero {
+    padding: 2rem 1rem;
+  }
+
+  .hero h1 {
+    font-size: 1.5rem; /* Titre compact */
+    border-radius: 15px;
+  }
+
+  .stat-number {
     font-size: 2rem;
   }
 
-  .subtitle {
-    font-size: 1rem;
-  }
-
-  .offers-grid {
-    grid-template-columns: 1fr;
-    padding: 0 16px;
-    gap: 24px;
-  }
-
-  .card-image {
-    height: 200px;
-  }
-
-  .card-body {
-    padding: 24px 20px;
-  }
-
-  .card-footer {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .btn-apply {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .latest-offers-section h1 {
-    font-size: 1.75rem;
-  }
-
-  .header-section {
-    margin-bottom: 40px;
-  }
-
-  .card-image {
-    height: 180px;
-  }
-
-  .offer-title {
-    font-size: 1.2rem;
-  }
-
-  .btn-apply {
-    padding: 12px 20px;
+  .pres-ul li {
     font-size: 0.9rem;
+    padding: 1rem; /* On gagne de la place verticale */
+  }
+
+  .header-section h1 {
+    font-size: 1.6rem;
+  }
+
+  .background-logo {
+    display: none; /* On cache le logo de fond sur petit mobile pour la lisibilité */
   }
 }
 </style>
