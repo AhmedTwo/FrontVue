@@ -25,6 +25,9 @@ const addRequest = async () => {
     return
   }
 
+  loading.value = true
+  error.value = null // Réinitialise l'erreur au début
+
   // Assurez-vous que les clés ci-dessous correspondent aux attentes de votre API
   const payload = {
     title: requestData.value.title,
@@ -33,7 +36,7 @@ const addRequest = async () => {
   }
 
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/addRequest', payload, {
+    const response = await axios.post(`${apiUrl}/api/addRequest`, payload, {
       // Le Payload est le corps de données que j'envoie (par exemple, le JSON de l'offre) au serveur pour qu'il puisse créer la ressource
       headers: {
         Authorization: `Bearer ${token}`,

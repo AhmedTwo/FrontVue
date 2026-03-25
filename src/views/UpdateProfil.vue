@@ -98,6 +98,8 @@ const updateProfil = async () => {
   const token = localStorage.getItem('auth_token')
   const formData = new FormData()
 
+  formData.append('_method', 'PUT')
+
   formData.append('nom', profil.value.nom)
   formData.append('prenom', profil.value.prenom)
   formData.append('email', profil.value.email)
